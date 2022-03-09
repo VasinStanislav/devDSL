@@ -1,0 +1,5 @@
+main_programm() {
+    x = 4
+    print("x is ", x)
+    num = 2; num2 = num + 1
+}
