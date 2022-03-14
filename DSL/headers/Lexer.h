@@ -6,15 +6,22 @@
 #include <map>
 #include <string>
 #include <fstream>
+#include <typeinfo>
+
+
+typedef std::map<std::string, std::regex> M;
+typedef std::multimap<std::string, std::string> MM;
+
 
 class Lexer
 {
-        std::map<std::string, std::regex> lexems;
-        //std::vector<std::string> keyWords;
+        M lexems;
+        M keyWords;
+
+        template <typename T> std::string getTocken(std::string, T lexems);
     public:
         Lexer();
-        std::string getTocken(std::string);
-        std::multimap<std::string, std::string> * tokenize(std::ifstream *);
+        MM * tokenize(std::ifstream *);
 };
 
 #endif
