@@ -5,7 +5,7 @@ int testLexer()
     Lexer lexer;
 
     std::ifstream in("../resources/Programm.txt");
-    std::multimap<std::string, std::string> list;
+    MM list;
     if (in.is_open())
     {
         list = *lexer.tokenize(&in);
