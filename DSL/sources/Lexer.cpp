@@ -3,9 +3,9 @@
 Lexer::Lexer()
 {
     this->lexems.insert(std::make_pair("VARIABLE", R"([a-zA-Z\_]{1}[0-9a-zA-Z\_]{0,31})"));
-    this->lexems.insert(std::make_pair("FUNCTION", R"([a-z\_]{1}[0-9a-zA-Z\_]{0,31}[\s]*\([\s]*\))"));
+    this->lexems.insert(std::make_pair("FUNCTION", R"([a-z\_]{1}[0-9a-zA-Z\_]{0,31}\(\))"));
     this->lexems.insert(std::make_pair("DIGIT", R"(0|([1-9][0-9]*))"));
-    this->lexems.insert(std::make_pair("STRING", R"(\"[0-9a-zA-Z\*\\/&\_\.\,\;\\\!\?\-)\(]*\")"));
+    this->lexems.insert(std::make_pair("STRING", R"(\"[0-9a-zA-Z\*\\/&\_\.\,\;\\\!\?\- )\(]*\")"));
     this->lexems.insert(std::make_pair("OPERATOR", R"([%=+*\-\\<>!]|(>=)|(<=))"));
     this->lexems.insert(std::make_pair("L_BRACKET", R"(\()"));
     this->lexems.insert(std::make_pair("R_BRACKET", R"(\))"));
@@ -13,11 +13,6 @@ Lexer::Lexer()
     this->lexems.insert(std::make_pair("R_BRACE", R"(\})"));
     this->lexems.insert(std::make_pair("ARG_SEPARATOR", R"(\,)"));
     this->lexems.insert(std::make_pair("SEPARATOR", R"(\;)"));
-    this->lexems.insert(std::make_pair("IF_KW", R"((if))"));
-    this->lexems.insert(std::make_pair("ELSE_KW", R"((else))"));
-    this->lexems.insert(std::make_pair("ELIF_KW", R"((elif))"));
-    this->lexems.insert(std::make_pair("WHILE_KW", R"((while))"));
-    this->lexems.insert(std::make_pair("FOR_KW", R"((for))"));
 
     this->keyWords.insert(std::make_pair("IF_KW", R"((if))"));
     this->keyWords.insert(std::make_pair("ELSE_KW", R"((else))"));
@@ -43,21 +38,27 @@ std::string Lexer::getTocken(std::string str, T lexems)
     return tocken;
 }
 
-MM * Lexer::tokenize(std::ifstream *input)
+V * Lexer::tokenize(std::ifstream *input)
 {
-    MM *tokenList = nullptr;
+    V *tokenList = nullptr;
     
     std::string line = "";
     if (input)
     {
-        tokenList = new MM();
+        tokenList = new V();
 
         while(std::getline(*input, line, '\n'))
         {
             std::string newLine = "";
+
+            bool inQuotes = false;
             for (int i = 0; i < line.length(); i++)
             {
-                if (line[i] != ' ')
+                if (line[i] == '"')
+                {
+                    inQuotes = !inQuotes;
+                }
+                if (line[i] != ' ' or inQuotes)
                 {
                     newLine += line[i];
                 }
@@ -110,10 +111,10 @@ MM * Lexer::tokenize(std::ifstream *input)
                     }
                 }
 
-                std::string token = this->getTocken(curStr, this->lexems);
-                if (token != "")
+                std::string type = this->getTocken(curStr, this->lexems);
+                if (type != "")
                 {
-                    if (token == "FUNCTION")
+                    if (type == "FUNCTION")
                     {
                         std::string curStrWithoutBrackets = 
                             curStr.substr(0, curStr.length() - 2);
@@ -123,11 +124,12 @@ MM * Lexer::tokenize(std::ifstream *input)
                             tokenWithoutBrackets.substr(
                             (tokenWithoutBrackets.length() - 2)) == "KW") 
                         {
-                            token = tokenWithoutBrackets;
+                            type = tokenWithoutBrackets;
                         }
                         curStr = curStrWithoutBrackets;
                     }
-                    tokenList->insert(std::make_pair(token, curStr));
+
+                    tokenList->push_back(new Token{curStr, type});
                 }
             }
         }

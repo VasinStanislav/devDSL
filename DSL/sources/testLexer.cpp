@@ -5,7 +5,7 @@ int testLexer()
     Lexer lexer;
 
     std::ifstream in("../resources/Programm.txt");
-    MM list;
+    V list;
     if (in.is_open())
     {
         list = *lexer.tokenize(&in);
@@ -16,7 +16,7 @@ int testLexer()
     {
         for (const auto &el : list)
         {
-            std::cout<<el.second<<" : "<<el.first<<std::endl;
+            std::cout<<el->value<<" : "<<el->type<<std::endl;
         }
     }
 

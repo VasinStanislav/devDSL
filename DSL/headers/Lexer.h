@@ -7,10 +7,13 @@
 #include <string>
 #include <fstream>
 #include <typeinfo>
+#include <vector>
+#include "Token.h"
 
 
 typedef std::map<std::string, std::regex> M;
-typedef std::multimap<std::string, std::string> MM;
+//typedef std::multimap<std::string, std::string> MM;
+typedef std::vector<Token *> V;
 
 
 class Lexer
@@ -18,10 +21,10 @@ class Lexer
         M lexems;
         M keyWords;
 
-        template <typename T> std::string getTocken(std::string, T lexems);
+        template <typename T> std::string getTocken(std::string, T);
     public:
         Lexer();
-        MM * tokenize(std::ifstream *);
+        V * tokenize(std::ifstream *);
 };
 
 #endif
