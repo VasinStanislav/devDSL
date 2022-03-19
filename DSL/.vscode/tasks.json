@@ -11,6 +11,7 @@
 				"${file}",
 				"${fileDirname}/../headers/Lexer.h",
 				"${fileDirname}/../headers/testLexer.h",
+				"${fileDirname}/../headers/Token.h",
 				"Lexer.cpp", "testLexer.cpp", 
 				"-o",
 				"${fileDirname}/../bin/${fileBasenameNoExtension}"
