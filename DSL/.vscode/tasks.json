@@ -10,9 +10,10 @@
 				"-g",
 				"${file}",
 				"${fileDirname}/../headers/Lexer.h",
-				"${fileDirname}/../headers/testLexer.h",
+				"${fileDirname}/../headers/Parser.h",
+				"${fileDirname}/../headers/execApp.h",
 				"${fileDirname}/../headers/Token.h",
-				"Lexer.cpp", "testLexer.cpp", 
+				"Lexer.cpp", "execApp.cpp", "Parser.cpp",
 				"-o",
 				"${fileDirname}/../bin/${fileBasenameNoExtension}"
 			],

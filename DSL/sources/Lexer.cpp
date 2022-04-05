@@ -19,6 +19,7 @@ Lexer::Lexer()
     this->keyWords.insert(std::make_pair("ELIF_KW", R"(^(elif)$)"));
     this->keyWords.insert(std::make_pair("WHILE_KW", R"(^(while)$)"));
     this->keyWords.insert(std::make_pair("FOR_KW", R"(^(for)$)"));
+    this->keyWords.insert(std::make_pair("RETURN", R"(^(return)$)"));
 }
 
 template <typename T>
@@ -78,7 +79,8 @@ str_pair Lexer::nipOff(string line)
                     curStr += line[0];
                 }
                 else 
-                {    this->lexems.insert(std::make_pair("FLOAT", R"(^0|([1-9][0-9]*[.][0-9]+)$)"));
+                {
+                    curStr.erase(curStr.length()-1);
                     break;
                 }
             }

@@ -1,6 +1,6 @@
-#include "../headers/testLexer.h"
+#include "../headers/execApp.h"
 
 int main()
 {
-    return testLexer();
+    return execApp();
 }
