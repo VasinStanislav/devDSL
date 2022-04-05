@@ -1,5 +1,5 @@
 main_programm() {
-    x = 4
+    x = 422
     print("x is ", x)
-    num = 2; num2 = num + 1
+    num = 21; num2 = num + 1
 }

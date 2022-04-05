@@ -10,13 +10,17 @@ int testLexer()
     {
         list = *lexer.tokenize(&in);
     }
+    else 
+    {
+
+    }
     in.close();
 
     if (!list.empty())
     {
         for (const auto &el : list)
         {
-            std::cout<<el->value<<" : "<<el->type<<std::endl;
+            std::cout<<el->value<<" : "<<el->type<<"\n";
         }
     }
 
