@@ -9,7 +9,7 @@
 
 int execApp();
 
-V* lexAnalysis(std::ifstream *);
+V* analyze(std::ifstream *);
 int parse(V *);
 
 

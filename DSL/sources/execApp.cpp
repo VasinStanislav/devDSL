@@ -4,14 +4,14 @@ int execApp()
 {
     std::ifstream in("../resources/Programm.txt");
 
-    V list = *lexAnalysis(&in);
+    V list = *analyze(&in);
 
     parse(&list);
 
     return 0;
 }
 
-V * lexAnalysis(std::ifstream *input)
+V * analyze(std::ifstream *input)
 {
     Lexer lexer;
 
@@ -40,7 +40,7 @@ V * lexAnalysis(std::ifstream *input)
 int parse(V *tokenList)
 {
     Parser parser(tokenList);
-    parser.grammarCheck();
+    parser.syntaxCheck();
 
     return 0;
 }

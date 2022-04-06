@@ -10,13 +10,16 @@ typedef V::iterator vecIt;
 
 class Parser
 {
+        int status;
+
         V tokenList;
         vecIt listIt;
 
-        void functionGrammar(Token *);
+        void functionCheck();
+        void argsCheck();
     public:
         Parser(V *);
-        void grammarCheck();
+        void syntaxCheck();
 
         ~Parser();
 };

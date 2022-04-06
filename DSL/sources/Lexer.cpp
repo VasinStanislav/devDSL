@@ -12,7 +12,7 @@ Lexer::Lexer()
     this->lexems.insert(std::make_pair("L_BRACE", R"(^\{$)"));
     this->lexems.insert(std::make_pair("R_BRACE", R"(^\}$)"));
     this->lexems.insert(std::make_pair("ARG_SEPARATOR", R"(^\,$)"));
-    this->lexems.insert(std::make_pair("SEPARATOR", R"(^\;$)"));
+    //this->lexems.insert(std::make_pair("SEPARATOR", R"(^\;$)"));
 
     this->keyWords.insert(std::make_pair("IF_KW", R"(^(if)$)"));
     this->keyWords.insert(std::make_pair("ELSE_KW", R"(^(else)$)"));
