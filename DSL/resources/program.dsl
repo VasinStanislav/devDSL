@@ -1,4 +1,4 @@
-main_programm() {
+main_programm(argc, argv) {
     x = 422
     print("x is ", x)
     num = 21

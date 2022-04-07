@@ -41,7 +41,8 @@ void Parser::functionCheck()
         }
         else 
         {
-            throw "( was expected; " + (*listIt)->type + " was provided";
+            throw "( was expected; " + ((listIt==tokenList.end())? "nothing" : (*listIt)->type) 
+                + " was provided";
         }
 
         if (listIt!=tokenList.end())
@@ -55,7 +56,8 @@ void Parser::functionCheck()
             }
             else 
             {
-                throw ") was expected; " + (*listIt)->type + " was provided";
+                throw ") was expected; " + ((listIt==tokenList.end())? "nothing" : (*listIt)->type)
+                    + " was provided";
             }
         }
 
@@ -97,22 +99,29 @@ void Parser::argsCheck()
                     {
                         listIt++;
                     }
+                    else 
+                    {
+                        std::string message = "argument were expected; " + 
+                        ((listIt==tokenList.end())? "nothing" : (*listIt)->type) + " was provided";
+                        throw message;
+                    }
                 }
                 else 
                 {
-                    throw ") or argument were expected; " + (*listIt)->type + " was provided";
+                    throw ") or argument were expected; " + ((listIt==tokenList.end())? "nothing" : 
+                    (*listIt)->type) + " was provided";
                 }
             }
         }
         else 
         {
-            throw ") or argument were expected; " + (*listIt)->type + " was provided";
+            throw ") or argument were expected; " + ((listIt==tokenList.end())? "nothing" :
+            (*listIt)->type) + " was provided";
         }
     }
     catch(const std::string &exception)
     {
         std::cerr<<exception<<"\n";
-        listIt = tokenList.end();
         status = -1;
         return;
     }

@@ -2,7 +2,7 @@
 
 int execApp()
 {
-    std::ifstream in("../resources/Programm.txt");
+    std::ifstream in("../resources/program.dsl");
 
     V list = *analyze(&in);
 
