@@ -10,12 +10,15 @@ typedef V::iterator vecIt;
 
 class Parser
 {
+        unsigned int curLineNum;
         V tokenList;
         vecIt listIt;
 
         void handleError(const std::string &exception);
         void functionCheck();
         void argsCheck();
+        void blockCheck();
+        void expressionCheck();
     public:
         Parser(V *);
         void syntaxCheck();

@@ -2,24 +2,25 @@
 
 Lexer::Lexer()
 {
-    lexems.fill("VARIABLE",      (regex)(R"(^[a-zA-Z\_]{1}[0-9a-zA-Z\_]{0,31}$)"));
-    lexems.fill("FUNCTION",      (regex)(R"(^[a-z\_]{1}[0-9a-zA-Z\_]{0,31}\(\)$)"));
-    lexems.fill("INTEGER",       (regex)(R"(^0|([1-9][0-9]*)$)"));
-    lexems.fill("STRING",        (regex)(R"(^\"[0-9a-zA-Z\*\\/&\_\.\,\;\\\!\?\- )\(]*\"$)"));
-    lexems.fill("OPERATOR",      (regex)(R"(^[%=+*\-\\<>!]|(>=)|(<=)$)"));
-    lexems.fill("L_BRACKET",     (regex)(R"(^\($)"));
-    lexems.fill("R_BRACKET",     (regex)(R"(^\)$)"));
-    lexems.fill("L_BRACE",       (regex)(R"(^\{$)"));
-    lexems.fill("R_BRACE",       (regex)(R"(^\}$)"));
-    lexems.fill("ARG_SEPARATOR", (regex)(R"(^\,$)"));
-  //lexems.fill("SEPARATOR",     (regex)(R"(^\;$)"));
+    lexems.fill("VARIABLE",            (regex)(R"(^[a-zA-Z\_]{1}[0-9a-zA-Z\_]{0,31}$)"));
+    lexems.fill("FUNCTION",            (regex)(R"(^[a-z\_]{1}[0-9a-zA-Z\_]{0,31}\(\)$)"));
+    lexems.fill("INTEGER",             (regex)(R"(^0|([1-9][0-9]*)$)"));
+    lexems.fill("STRING",              (regex)(R"(^\"[0-9a-zA-Z\*\\/&\_\.\,\;\\\!\?\- )\(]*\"$)"));
+    lexems.fill("MATH_OPERATOR",       (regex)(R"(^[%=+*\-\\]$)"));
+    lexems.fill("COMPRASION_OPERATOR", (regex)(R"(^[<>!]|(>=)|(<=)|(==)$)"));
+    lexems.fill("L_BRACKET",           (regex)(R"(^\($)"));
+    lexems.fill("R_BRACKET",           (regex)(R"(^\)$)"));
+    lexems.fill("L_BRACE",             (regex)(R"(^\{$)"));
+    lexems.fill("R_BRACE",             (regex)(R"(^\}$)"));
+    lexems.fill("ARG_SEPARATOR",       (regex)(R"(^\,$)"));
+  //lexems.fill("SEPARATOR",           (regex)(R"(^\;$)"));
 
-    keyWords.fill("IF_KW",       (regex)(R"(^(if)$)"));
-    keyWords.fill("ELSE_KW",     (regex)(R"(^(else)$)"));
-    keyWords.fill("ELIF_KW",     (regex)(R"(^(elif)$)"));
-    keyWords.fill("WHILE_KW",    (regex)(R"(^(while)$)"));
-    keyWords.fill("FOR_KW",      (regex)(R"(^(for)$)"));
-    keyWords.fill("RETURN",      (regex)(R"(^(return)$)"));
+    keyWords.fill("IF_KW",             (regex)(R"(^(if)$)"));
+    keyWords.fill("ELSE_KW",           (regex)(R"(^(else)$)"));
+    keyWords.fill("ELIF_KW",           (regex)(R"(^(elif)$)"));
+    keyWords.fill("WHILE_KW",          (regex)(R"(^(while)$)"));
+    keyWords.fill("FOR_KW",            (regex)(R"(^(for)$)"));
+    keyWords.fill("RETURN",            (regex)(R"(^(return)$)"));
 }
 
 void MyMap::fill(string str, regex regx) { this->insert(std::make_pair(str, regx)); }

@@ -1,6 +1,11 @@
 main_programm(argc, argv) {
     x = 422
-    print("x is ", x)
-    num = 21
-    num2 = num + 1
+
+    str = argc + " is more or equal than " + x
+    print(str)
+
+    str = argc + " is less than " + x
+    print(str)
+
+    return
 }
