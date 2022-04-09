@@ -2,25 +2,27 @@
 
 Lexer::Lexer()
 {
-    this->lexems.insert(std::make_pair("VARIABLE", R"(^[a-zA-Z\_]{1}[0-9a-zA-Z\_]{0,31}$)"));
-    this->lexems.insert(std::make_pair("FUNCTION", R"(^[a-z\_]{1}[0-9a-zA-Z\_]{0,31}\(\)$)"));
-    this->lexems.insert(std::make_pair("INTEGER", R"(^0|([1-9][0-9]*)$)"));
-    this->lexems.insert(std::make_pair("STRING", R"(^\"[0-9a-zA-Z\*\\/&\_\.\,\;\\\!\?\- )\(]*\"$)"));
-    this->lexems.insert(std::make_pair("OPERATOR", R"(^[%=+*\-\\<>!]|(>=)|(<=)$)"));
-    this->lexems.insert(std::make_pair("L_BRACKET", R"(^\($)"));
-    this->lexems.insert(std::make_pair("R_BRACKET", R"(^\)$)"));
-    this->lexems.insert(std::make_pair("L_BRACE", R"(^\{$)"));
-    this->lexems.insert(std::make_pair("R_BRACE", R"(^\}$)"));
-    this->lexems.insert(std::make_pair("ARG_SEPARATOR", R"(^\,$)"));
-    //this->lexems.insert(std::make_pair("SEPARATOR", R"(^\;$)"));
+    lexems.fill("VARIABLE",      (regex)(R"(^[a-zA-Z\_]{1}[0-9a-zA-Z\_]{0,31}$)"));
+    lexems.fill("FUNCTION",      (regex)(R"(^[a-z\_]{1}[0-9a-zA-Z\_]{0,31}\(\)$)"));
+    lexems.fill("INTEGER",       (regex)(R"(^0|([1-9][0-9]*)$)"));
+    lexems.fill("STRING",        (regex)(R"(^\"[0-9a-zA-Z\*\\/&\_\.\,\;\\\!\?\- )\(]*\"$)"));
+    lexems.fill("OPERATOR",      (regex)(R"(^[%=+*\-\\<>!]|(>=)|(<=)$)"));
+    lexems.fill("L_BRACKET",     (regex)(R"(^\($)"));
+    lexems.fill("R_BRACKET",     (regex)(R"(^\)$)"));
+    lexems.fill("L_BRACE",       (regex)(R"(^\{$)"));
+    lexems.fill("R_BRACE",       (regex)(R"(^\}$)"));
+    lexems.fill("ARG_SEPARATOR", (regex)(R"(^\,$)"));
+  //lexems.fill("SEPARATOR",     (regex)(R"(^\;$)"));
 
-    this->keyWords.insert(std::make_pair("IF_KW", R"(^(if)$)"));
-    this->keyWords.insert(std::make_pair("ELSE_KW", R"(^(else)$)"));
-    this->keyWords.insert(std::make_pair("ELIF_KW", R"(^(elif)$)"));
-    this->keyWords.insert(std::make_pair("WHILE_KW", R"(^(while)$)"));
-    this->keyWords.insert(std::make_pair("FOR_KW", R"(^(for)$)"));
-    this->keyWords.insert(std::make_pair("RETURN", R"(^(return)$)"));
+    keyWords.fill("IF_KW",       (regex)(R"(^(if)$)"));
+    keyWords.fill("ELSE_KW",     (regex)(R"(^(else)$)"));
+    keyWords.fill("ELIF_KW",     (regex)(R"(^(elif)$)"));
+    keyWords.fill("WHILE_KW",    (regex)(R"(^(while)$)"));
+    keyWords.fill("FOR_KW",      (regex)(R"(^(for)$)"));
+    keyWords.fill("RETURN",      (regex)(R"(^(return)$)"));
 }
+
+void MyMap::fill(string str, regex regx) { this->insert(std::make_pair(str, regx)); }
 
 template <typename T>
 string Lexer::getTocken(string str, T lexems)

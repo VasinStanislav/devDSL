@@ -12,17 +12,23 @@
 #include "Token.h"
 
 
-typedef std::map<std::string, std::regex> M;
 typedef std::string string;
-typedef std::pair<string, string> str_pair;
-//typedef std::multimap<std::string, std::string> MM;
-typedef std::vector<Token *> V;
+typedef std::regex   regex;
 
+typedef std::map<string, regex>           M;
+typedef std::pair<string, string>  str_pair;
+typedef std::vector<Token *>              V;
+
+class MyMap : public M
+{
+    public:
+        void fill(string, regex);
+};
 
 class Lexer
 {
-        M lexems;
-        M keyWords;
+        MyMap lexems;
+        MyMap keyWords;
 
         template <typename T> string getTocken(string, T);
         str_pair nipOff(string);
