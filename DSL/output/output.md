@@ -1,2 +1,2 @@
-# Results:
-![изображение](https://user-images.githubusercontent.com/87648247/159132751-7a060c11-574a-46a4-a15c-c45d97c75c33.png)
+# Работа лексера:
+![изображение](https://user-images.githubusercontent.com/87648247/162581548-29243829-14da-413d-a8c4-d0fdc4c4b955.png)
