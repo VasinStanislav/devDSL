@@ -30,7 +30,8 @@ V * analyze(std::ifstream *input)
     {
         for (const auto &el : *tokenList)
         {
-            std::cout<<el->value<<" : "<<el->type<<"\n";
+            std::cout<<std::setw(32)<<std::left<<el->value.c_str()<<":";
+            std::cout<<std::setw(16)<<std::right<<el->type.c_str()<<"\n";
         }
     }
 

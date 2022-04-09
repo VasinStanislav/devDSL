@@ -7,6 +7,7 @@ struct Token
 {
     std::string value;
     std::string type;
+    unsigned int line;
 };
 
 #endif

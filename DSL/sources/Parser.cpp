@@ -1,8 +1,6 @@
 #include "../headers/Parser.h"
 
-Parser::Parser(V *tokenList) : tokenList(*tokenList),
-        listIt(this->tokenList.begin()), status(0){}
-
+Parser::Parser(V *tokenList) : tokenList(*tokenList), listIt(this->tokenList.begin()){}
 
 Parser::~Parser()
 {
@@ -14,18 +12,29 @@ Parser::~Parser()
     tokenList.clear();
 }
 
-
-
 void Parser::syntaxCheck()
 {   
     while (listIt != tokenList.end())
     {
-        if ((*listIt)->type == "FUNCTION")
+        try
         {
-            this->functionCheck();
+            if ((*listIt)->type == "FUNCTION")
+            {
+                this->functionCheck();
+            }
+        }
+        catch(const std::string &exception)
+        {
+            this->handleError(exception);
+            break;
         }
         break;
     }
+}
+
+void Parser::handleError(const std::string &exception)  
+{ 
+    std::cerr<<exception<<"; syntax analysis has been stopped\n"; 
 }
 
 /* ----------------------EXPRESSIONS----------------------- */
@@ -33,96 +42,77 @@ void Parser::syntaxCheck()
 void Parser::functionCheck()
 {
     this->listIt++;
-    try
+    if (listIt!=tokenList.end() and (*listIt)->type == "L_BRACKET")
     {
-        if (listIt!=tokenList.end() and (*listIt)->type == "L_BRACKET")
+        listIt++;
+    }
+    else 
+    {
+        throw "in line " + std::to_string((*listIt)->line) + ": ( was expected; " + 
+        ((listIt==tokenList.end())? "nothing" : (*listIt)->type) + " was provided";
+    }
+
+    if (listIt!=tokenList.end())
+    {
+        this->argsCheck();
+        listIt++;
+
+        if (listIt!=tokenList.end() and (*listIt)->type == "R_BRACKET")
         {
             listIt++;
         }
         else 
         {
-            throw "( was expected; " + ((listIt==tokenList.end())? "nothing" : (*listIt)->type) 
-                + " was provided";
+            throw "in line " + std::to_string((*listIt)->line) + ": ) was expected; " + 
+            ((listIt==tokenList.end())? "nothing" : (*listIt)->type) + " was provided";
         }
-
-        if (listIt!=tokenList.end())
-        {
-            this->argsCheck();
-            listIt++;
-
-            if (listIt!=tokenList.end() and (*listIt)->type == "R_BRACKET")
-            {
-                listIt++;
-            }
-            else 
-            {
-                throw ") was expected; " + ((listIt==tokenList.end())? "nothing" : (*listIt)->type)
-                    + " was provided";
-            }
-        }
-
-    }
-    catch(const std::string &exception)
-    {
-        std::cerr<<exception<<"\n";
-        listIt = tokenList.end();
-        status = -1;
-        return;
     }
 }
 
 void Parser::argsCheck()
 {
-    try
+    if (listIt!=tokenList.end() and (*listIt)->type == "R_BRACKET")
     {
-        if (listIt!=tokenList.end() and (*listIt)->type == "R_BRACKET")
-        {
-            listIt--;
-        }
-        else if (listIt!=tokenList.end() and ((*listIt)->type == "VARIABLE" or
-                (*listIt)->type == "INTEGER" or (*listIt)->type == "STRING"))
-        { 
-            listIt++;
+        listIt--;
+    }
+    else if (listIt!=tokenList.end() and ((*listIt)->type == "VARIABLE" or
+            (*listIt)->type == "INTEGER" or (*listIt)->type == "STRING"))
+    { 
+        listIt++;
 
-            while(listIt!=tokenList.end())
+        while(listIt!=tokenList.end())
+        {
+            if ((*listIt)->type == "R_BRACKET") 
             {
-                if ((*listIt)->type == "R_BRACKET") 
-                {
-                    listIt--;
-                    break;
-                }
-                if ((*listIt)->type == "ARG_SEPARATOR")
+                listIt--;
+                break;
+            }
+            if ((*listIt)->type == "ARG_SEPARATOR")
+            {
+                listIt++;
+                if ((*listIt)->type == "VARIABLE" or (*listIt)->type == "INTEGER" or
+                    (*listIt)->type == "STRING")
                 {
                     listIt++;
-                    if ((*listIt)->type == "VARIABLE" or (*listIt)->type == "INTEGER" or
-                        (*listIt)->type == "STRING")
-                    {
-                        listIt++;
-                    }
-                    else 
-                    {
-                        std::string message = "argument were expected; " + 
-                        ((listIt==tokenList.end())? "nothing" : (*listIt)->type) + " was provided";
-                        throw message;
-                    }
                 }
                 else 
                 {
-                    throw ") or argument were expected; " + ((listIt==tokenList.end())? "nothing" : 
-                    (*listIt)->type) + " was provided";
+                    throw "in line " + std::to_string((*listIt)->line) + 
+                    ": argument was expected; " + ((listIt==tokenList.end())? "nothing" 
+                    : (*listIt)->type) + " was provided";
                 }
             }
-        }
-        else 
-        {
-            throw ") or argument were expected; " + ((listIt==tokenList.end())? "nothing" :
-            (*listIt)->type) + " was provided";
+            else 
+            {
+                throw "in line" + std::to_string((*listIt)->line) + 
+                ": ) or argument were expected; " + ((listIt==tokenList.end())? "nothing" : 
+                (*listIt)->type) + " was provided";
+            }
         }
     }
-    catch(const std::string &exception)
+    else 
     {
-        std::cerr<<exception<<"\n";
-        status = -1;
-        return;
+        throw "in line " + std::to_string((*listIt)->line) + ": ) or argument were expected; "
+        + ((listIt==tokenList.end())? "nothing" : (*listIt)->type) + " was provided";
     }
 }

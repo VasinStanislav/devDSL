@@ -100,7 +100,7 @@ V * Lexer::tokenize(std::ifstream *input)
     if (input)
     {
         tokenList = new V();
-        int strNum = 1;
+        unsigned int strNum = 1;
 
         while(std::getline(*input, line, '\n'))
         {
@@ -122,7 +122,7 @@ V * Lexer::tokenize(std::ifstream *input)
             str_pair lines = {curStr, line};
             while (lines.second != "")
             {
-                lines = this->nipOff(lines.second);
+                lines       = this->nipOff(lines.second);
                 string type = this->getTocken(lines.first, this->lexems);
 
                 try 
@@ -131,27 +131,32 @@ V * Lexer::tokenize(std::ifstream *input)
                     {
                         if (type == "FUNCTION")
                         {
-                            string curStrWithoutBrackets = curStr.substr(0, curStr.length() - 2);
-                            string tokenWithoutBrackets = getTocken(curStrWithoutBrackets, keyWords);
+                            string curStrWithoutBrackets = lines.first.substr(0, 
+                                                                            lines.first.length() - 2);
+                            string tokenWithoutBrackets  = getTocken(curStrWithoutBrackets, keyWords);
                             if (tokenWithoutBrackets != ""  and tokenWithoutBrackets.substr(
                                 (tokenWithoutBrackets.length() - 2)) == "KW") 
                             {
-                                type = tokenWithoutBrackets;
+                                type    = tokenWithoutBrackets;
                             }
-                            curStr = curStrWithoutBrackets;
+                            lines.first = curStrWithoutBrackets;
                         }
 
-                        tokenList->push_back(new Token{lines.first, type});
+                        tokenList->push_back(new Token{lines.first, type, strNum});
                     }
                     else 
                     {
-                        throw "in line "+std::to_string(strNum)+ ": unknown lexeme\n"+
-                        "lexical analysis has been stopped";
+                        throw "in line " + std::to_string(strNum) + ": unknown lexeme" +
+                        " lexical analysis has been stopped";
                     }
                 }
                 catch(const string &exception)
                 {
                     std::cerr<<exception<<"\n";
+                    for (size_t it = 0; it < tokenList->size(); ++it)
+                    {
+                        delete (*tokenList)[it];
+                    }
                     tokenList->clear();
                     return tokenList;
                 }
