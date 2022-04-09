@@ -144,6 +144,11 @@ V * Lexer::tokenize(std::ifstream *input)
                             }
                             lines.first = curStrWithoutBrackets;
                         }
+                        if (type == "VARIABLE")
+                        {
+                            string keyWDToken = getTocken(lines.first, keyWords);
+                            if (keyWDToken != "") { type = keyWDToken; }
+                        }
 
                         tokenList->push_back(new Token{lines.first, type, strNum});
                     }

@@ -1,5 +1,5 @@
 main_programm(argc, argv) {
-    x = 422
+    x = 422 *
 
     str = argc + " is more or equal than " + x
     print(str)

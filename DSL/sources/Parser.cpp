@@ -60,11 +60,7 @@ void Parser::functionCheck()
         ((listIt==tokenList.end())? "nothing" : (*listIt)->type) + " was provided";
     }
 
-    if (listIt!=tokenList.end())
-    {
-        this->argsCheck();
-        listIt++;
-    }
+    if (listIt!=tokenList.end()) { this->argsCheck(); }
 }
 
 void Parser::argsCheck()
@@ -156,7 +152,13 @@ void Parser::blockCheck()
             throw "in line " + std::to_string(curLineNum) + ": } or expression were expected; "
             "nothing was provided";
         }
-        else { this->expressionCheck(); }
+        else 
+        {
+            if ((*listIt)->type == "VARIABLE" 
+                or (*listIt)->type == "RETURN")     { this->expressionCheck(); }
+            else if ((*listIt)->type == "FUNCTION") { this->functionCheck(); }
+            else if ((*listIt)->type == "L_BRACE")  { this->blockCheck(); }
+        }
     }
 }
 
@@ -217,6 +219,7 @@ void Parser::expressionCheck()
                 {
                     curLineNum = (*listIt)->line;
                     if ((*listIt)->type == "VARIABLE") { this->expressionCheck(); }
+                    break;
                 }
                 else 
                 {
@@ -225,12 +228,43 @@ void Parser::expressionCheck()
                     + (*listIt)->type + " was provided";
                 }
             }
-            else if (listIt!=tokenList.end() and (*listIt)->type=="MATH_OPERATOR")
+            else if (listIt!=tokenList.end() and (*listIt)->type=="MATH_OPERATOR") 
             {
-                if (listIt!=tokenList.end()) { curLineNum = (*listIt)->line; }
-                else { curLineNum = (*(tokenList.end()--))->line; }
-                throw "in line " + std::to_string(curLineNum) + ": rvalue was expected; "
-                + ((listIt==tokenList.end())? "nothing" : (*listIt)->type) + " was provided";
+                listIt++; 
+                if (listIt!=tokenList.end() and (*listIt)->type == "VARIABLE" or
+                    (*listIt)->type == "INTEGER" or (*listIt)->type == "STRING")
+                {
+                    if (curLineNum < (*listIt)->line) 
+                    {
+                        if (listIt!=tokenList.end()) { curLineNum = (*listIt)->line; }
+                        else { curLineNum = (*(tokenList.end()--))->line; }
+                        throw "in line " + std::to_string(curLineNum) + ": rvalue was expected; "
+                        + ((listIt==tokenList.end())? "nothing" : (*listIt)->type) + " was provided";
+                    }
+                    else { listIt++; }
+                }
+                else 
+                {
+                    if (listIt!=tokenList.end()) { curLineNum = (*listIt)->line; }
+                    else { curLineNum = (*(tokenList.end()--))->line; }
+                    throw "in line " + std::to_string(curLineNum) + ": rvalue was expected; "
+                    + ((listIt==tokenList.end())? "nothing" : (*listIt)->type) + " was provided";
+                }
+            }
+        }
+        else
+        {
+            if (curLineNum < (*listIt)->line)
+            {
+                curLineNum = (*listIt)->line;
+                if ((*listIt)->type == "VARIABLE") { this->expressionCheck(); }
+                break;
+            }
+            else 
+            {
+                curLineNum = (*listIt)->line;
+                throw "in line " + std::to_string(curLineNum) + ": math. op or \\n were expected; " 
+                + (*listIt)->type + " was provided";
             }
         }
     }
