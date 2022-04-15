@@ -6,7 +6,8 @@ Lexer::Lexer()
     lexems.fill("FUNCTION",            (regex)(R"(^[a-z\_]{1}[0-9a-zA-Z\_]{0,31}\(\)$)"));
     lexems.fill("INTEGER",             (regex)(R"(^0|([1-9][0-9]*)$)"));
     lexems.fill("STRING",              (regex)(R"(^\"[0-9a-zA-Z\*\\/&\_\.\,\;\\\!\?\- )\(]*\"$)"));
-    lexems.fill("MATH_OPERATOR",       (regex)(R"(^[%=+*\-\\]$)"));
+    lexems.fill("MATH_OPERATOR",       (regex)(R"(^[%+*\-\\]$)"));
+    lexems.fill("ASSIGN_OPERATOR",     (regex)(R"(^(=)$)"));
     lexems.fill("COMPRASION_OPERATOR", (regex)(R"(^[<>!]|(>=)|(<=)|(==)$)"));
     lexems.fill("L_BRACKET",           (regex)(R"(^\($)"));
     lexems.fill("R_BRACKET",           (regex)(R"(^\)$)"));

@@ -14,10 +14,13 @@ class Parser
         V tokenList;
         vecIt listIt;
 
-        void handleError(const std::string &exception);
+        void generateException(std::string, bool);
+        void handleException(const std::string &);
+
         void functionCheck();
         void argsCheck();
         void blockCheck();
+        void assignmentCheck();
         void expressionCheck();
     public:
         Parser(V *);
