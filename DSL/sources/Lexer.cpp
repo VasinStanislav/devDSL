@@ -14,7 +14,7 @@ Lexer::Lexer()
     lexems.fill("L_BRACE",             (regex)(R"(^\{$)"));
     lexems.fill("R_BRACE",             (regex)(R"(^\}$)"));
     lexems.fill("ARG_SEPARATOR",       (regex)(R"(^\,$)"));
-  //lexems.fill("SEPARATOR",           (regex)(R"(^\;$)"));
+    lexems.fill("SEPARATOR",           (regex)(R"(^\;$)"));
 
     keyWords.fill("IF_KW",             (regex)(R"(^(if)$)"));
     keyWords.fill("ELSE_KW",           (regex)(R"(^(else)$)"));

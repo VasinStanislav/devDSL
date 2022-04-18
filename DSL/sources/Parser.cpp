@@ -174,6 +174,15 @@ void Parser::expressionCheck()
     while (true)
     {
         if (listIt==tokenList.end()) { break; }
+        if ((*listIt)->type=="SEPARATOR") 
+        {
+            listIt--;
+            if ((*listIt)->type == "VARIABLE" or (*listIt)->type == "INTEGER" or
+                (*listIt)->type == "STRING") { listIt++; }
+            else { this->generateException("value"); }
+            listIt++;
+            break;
+        }
         if ((*listIt)->type=="MATH_OPERATOR")
         {
             curLineNum = (*listIt)->line;
