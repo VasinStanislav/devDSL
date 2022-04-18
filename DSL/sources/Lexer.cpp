@@ -16,6 +16,7 @@ Lexer::Lexer()
     lexems.fill("ARG_SEPARATOR",       (regex)(R"(^\,$)"));
     lexems.fill("SEPARATOR",           (regex)(R"(^\;$)"));
 
+    keyWords.fill("DEFINITION",        (regex)(R"(^(def)$)"));
     keyWords.fill("IF_KW",             (regex)(R"(^(if)$)"));
     keyWords.fill("ELSE_KW",           (regex)(R"(^(else)$)"));
     keyWords.fill("ELIF_KW",           (regex)(R"(^(elif)$)"));
@@ -47,6 +48,11 @@ str_pair Lexer::nipOff(string line)
 {
     string curStr = "";
 
+    while(line[0] == ' ' or line[0] == '\t')
+    {
+        line = line.substr(1);
+    }
+
     if (line[0] == '(' or line[0] == ')' or line[0] == '{' or line[0] == '}')
     {
         curStr = line[0];
@@ -63,8 +69,7 @@ str_pair Lexer::nipOff(string line)
     {
         int pos = line.find("(");
 
-        if (pos > -1 and pos < line.find(")") and pos < line.find(";")
-            and line.find(",") and line.find("{") and line.find("}"))
+        if (pos < line.find(" "))
         {
             curStr = line.substr(0, pos);
             curStr.append("()");
@@ -100,7 +105,7 @@ V * Lexer::tokenize(std::ifstream *input)
 {
     V *tokenList = nullptr;
     
-    string line = "", curStr = "", newLine = "";
+    string line = "", curStr = "";
     if (input)
     {
         tokenList = new V();
@@ -108,20 +113,6 @@ V * Lexer::tokenize(std::ifstream *input)
 
         while(std::getline(*input, line, '\n'))
         {
-            bool inQuotes = false;
-            for (int i = 0; i < line.length(); i++)
-            {
-                if (line[i] == '"')
-                {
-                    inQuotes = !inQuotes;
-                }
-                if (line[i] != ' ' or inQuotes)
-                {
-                    newLine += line[i];
-                }
-            }
-            line = newLine;
-            newLine = "";
 
             str_pair lines = {curStr, line};
             while (lines.second != "")
