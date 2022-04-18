@@ -17,11 +17,13 @@ class Parser
         void generateException(std::string, bool);
         void handleException(const std::string &);
 
+        void functionDefCheck();
+        void functionCallCheck();
         void functionCheck();
         void argsCheck();
         void blockCheck();
         void assignmentCheck();
-        void expressionCheck();
+        void expressionCheck(bool inBrackets=false);
     public:
         Parser(V *);
         void syntaxCheck();
