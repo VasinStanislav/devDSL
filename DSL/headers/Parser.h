@@ -24,6 +24,7 @@ class Parser
         void blockCheck();
         void assignmentCheck();
         void expressionCheck(bool inBrackets=false);
+        void opReturnCheck();
     public:
         Parser(V *);
         void syntaxCheck();

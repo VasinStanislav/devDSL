@@ -85,6 +85,13 @@ void Parser::functionDefCheck()
 void Parser::functionCallCheck()
 {
     this->functionCheck();
+    if ((*listIt)->type=="SEPARATOR") 
+    {
+        listIt--;
+        if ((*listIt)->type == "R_BRACKET") { listIt++; }
+        else { this->generateException(")"); }
+        listIt++;            
+    }
 }
 
 void Parser::functionCheck()
@@ -159,7 +166,7 @@ void Parser::blockCheck()
         }
         else 
         {
-            if      ((*listIt)->type == "RETURN")       { listIt++; }
+            if      ((*listIt)->type == "RETURN")       { this->opReturnCheck(); }
             else if ((*listIt)->type == "VARIABLE")     { this->assignmentCheck(); }
             else if ((*listIt)->type == "DEFINITION")   { this->functionDefCheck(); }
             else if ((*listIt)->type == "FUNCTION")     { this->functionCallCheck(); }
@@ -191,8 +198,8 @@ void Parser::expressionCheck(bool inBrackets)
     {
         listIt++;
         this->expressionCheck(true);
-        if (listIt==tokenList.end())             { this->generateException("(");}
-        else if ((*listIt)->type != "R_BRACKET") { this->generateException("("); }
+        if (listIt==tokenList.end())             { this->generateException(")");}
+        else if ((*listIt)->type != "R_BRACKET") { this->generateException(")"); }
         listIt++;
     }
     else if ((*listIt)->type == "VARIABLE" or (*listIt)->type == "INTEGER" or
@@ -210,7 +217,10 @@ void Parser::expressionCheck(bool inBrackets)
         {
             listIt--;
             if ((*listIt)->type == "VARIABLE" or (*listIt)->type == "INTEGER" or
-                (*listIt)->type == "STRING") { listIt++; }
+                (*listIt)->type == "STRING" or (*listIt)->type == "R_BRACKET") 
+            { 
+                listIt++;
+            }
             else { this->generateException("value"); }
             listIt++;
             break;
@@ -255,6 +265,18 @@ void Parser::expressionCheck(bool inBrackets)
                     if ((*listIt)->type == "R_BRACKET") { break; }
                     else                                   { this->generateException(")"); }
                 }
+                else if ((*listIt)->type == "SEPARATOR")
+                {
+                    listIt--;
+                    if ((*listIt)->type == "VARIABLE" or (*listIt)->type == "INTEGER" or
+                        (*listIt)->type == "STRING" or (*listIt)->type == "R_BRACKET")
+                    {
+                        listIt++;
+                    }
+                    else                                    { this->generateException("value"); }
+                    listIt++;
+                    break;
+                }
                 else                        { this->generateException("math. operator or \\n"); }
             }
             else 
@@ -279,6 +301,11 @@ void Parser::expressionCheck(bool inBrackets)
         {
             if (curLineNum < (*listIt)->line)
             {
+                if (inBrackets)                            
+                {
+                    listIt--;
+                    this->generateException(")"); 
+                }
                 curLineNum = (*listIt)->line;
                 if ((*listIt)->type == "VARIABLE") { this->assignmentCheck(); }
                 break;
@@ -290,5 +317,17 @@ void Parser::expressionCheck(bool inBrackets)
             }
             else { this->generateException("math. operator or \\n"); }
         }
+    }
+}
+
+void Parser::opReturnCheck()
+{
+    curLineNum = (*listIt)->line;
+    listIt++;
+
+    if ((*listIt)->type == "SEPARATOR") { listIt++; }
+    else
+    {
+        if (curLineNum == (*listIt)->line) { this->expressionCheck(); }
     }
 }

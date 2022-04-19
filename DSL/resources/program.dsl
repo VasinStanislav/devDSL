@@ -13,7 +13,7 @@ def main_programm(argc, argv) {
 
     var = (((var_1_1_1 + var_1_1_2) * var_1_1 - var_1_2) + var_2) \ var_1
 
-    return
+    return var
 }
 
 line = ("abc" + "def")
