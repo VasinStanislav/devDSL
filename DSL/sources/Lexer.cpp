@@ -16,13 +16,15 @@ Lexer::Lexer()
     lexems.fill("ARG_SEPARATOR",       (regex)(R"(^\,$)"));
     lexems.fill("SEPARATOR",           (regex)(R"(^\;$)"));
 
-    keyWords.fill("DEFINITION",        (regex)(R"(^(def)$)"));
+    keyWords.fill("DEFINITION_KW",     (regex)(R"(^(def)$)"));
     keyWords.fill("IF_KW",             (regex)(R"(^(if)$)"));
     keyWords.fill("ELSE_KW",           (regex)(R"(^(else)$)"));
     keyWords.fill("ELIF_KW",           (regex)(R"(^(elif)$)"));
     keyWords.fill("WHILE_KW",          (regex)(R"(^(while)$)"));
     keyWords.fill("FOR_KW",            (regex)(R"(^(for)$)"));
-    keyWords.fill("RETURN",            (regex)(R"(^(return)$)"));
+    keyWords.fill("RETURN_KW",         (regex)(R"(^(return)$)"));
+    keyWords.fill("BREAK_KW",          (regex)(R"(^(break)$)"));
+    keyWords.fill("CONTINUE_KW",       (regex)(R"(^(continue)$)"));
 }
 
 void MyMap::fill(string str, regex regx) { this->insert(std::make_pair(str, regx)); }

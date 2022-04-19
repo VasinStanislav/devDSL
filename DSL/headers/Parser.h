@@ -23,8 +23,14 @@ class Parser
         void argsCheck();
         void blockCheck();
         void assignmentCheck();
-        void expressionCheck(bool inBrackets=false);
+        void expressionCheck(bool inBrackets=false, bool boolean=false);
         void opReturnCheck();
+        void opBreakCheck();
+        void opContinueCheck();
+        void opIfCheck();
+        void opElifCheck();
+        void opElseCheck();
+        void opWhileCheck();
     public:
         Parser(V *);
         void syntaxCheck();

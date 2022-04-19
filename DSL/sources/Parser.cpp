@@ -19,7 +19,7 @@ void Parser::syntaxCheck()
     {
         try
         {
-            if ((*listIt)->type == "DEFINITION")
+            if ((*listIt)->type == "DEFINITION_KW")
             {
                 this->functionDefCheck();
             }
@@ -34,6 +34,14 @@ void Parser::syntaxCheck()
             else if ((*listIt)->type == "VARIABLE")
             {
                 this->assignmentCheck();
+            }
+            else if ((*listIt)->type == "IF_KW")
+            {
+                this->opIfCheck();
+            }
+            else if ((*listIt)->type == "WHILE_KW")
+            {
+                this->opWhileCheck();
             }
             else { break; }
         }
@@ -166,11 +174,15 @@ void Parser::blockCheck()
         }
         else 
         {
-            if      ((*listIt)->type == "RETURN")       { this->opReturnCheck(); }
-            else if ((*listIt)->type == "VARIABLE")     { this->assignmentCheck(); }
-            else if ((*listIt)->type == "DEFINITION")   { this->functionDefCheck(); }
-            else if ((*listIt)->type == "FUNCTION")     { this->functionCallCheck(); }
-            else if ((*listIt)->type == "L_BRACE")      { this->blockCheck(); }
+            if      ((*listIt)->type == "RETURN_KW")     { this->opReturnCheck(); }
+            else if ((*listIt)->type == "BREAK_KW")      { this->opBreakCheck(); }
+            else if ((*listIt)->type == "CONTINUE_KW")   { this->opContinueCheck(); }
+            else if ((*listIt)->type == "VARIABLE")      { this->assignmentCheck(); }
+            else if ((*listIt)->type == "DEFINITION_Kw") { this->functionDefCheck(); }
+            else if ((*listIt)->type == "IF_KW")         { this->opIfCheck(); }
+            else if ((*listIt)->type == "WHILE_KW")      { this->opWhileCheck(); }
+            else if ((*listIt)->type == "FUNCTION")      { this->functionCallCheck(); }
+            else if ((*listIt)->type == "L_BRACE")       { this->blockCheck(); }
         }
     }
 }
@@ -191,13 +203,16 @@ void Parser::assignmentCheck()
     this->expressionCheck();
 }
 
-void Parser::expressionCheck(bool inBrackets)
+void Parser::expressionCheck(bool inBrackets, bool boolean)
 {
+    std::string curOperator = "MATH_OPERATOR";
+    if (boolean) { curOperator = "COMPRASION_OPERATOR"; }
+
     if (listIt==tokenList.end())                 { this->generateException("value"); }
     else if ((*listIt)->type == "L_BRACKET") 
     {
         listIt++;
-        this->expressionCheck(true);
+        this->expressionCheck(true, boolean);
         if (listIt==tokenList.end())             { this->generateException(")");}
         else if ((*listIt)->type != "R_BRACKET") { this->generateException(")"); }
         listIt++;
@@ -225,7 +240,7 @@ void Parser::expressionCheck(bool inBrackets)
             listIt++;
             break;
         }
-        if ((*listIt)->type=="MATH_OPERATOR")
+        if ((*listIt)->type==curOperator)
         {
             curLineNum = (*listIt)->line;
             listIt++;
@@ -248,10 +263,10 @@ void Parser::expressionCheck(bool inBrackets)
             }
 
             if (listIt==tokenList.end())  { this->generateException("math. operator or \\n"); }
-            else if ((*listIt)->type!="MATH_OPERATOR")
+            else if ((*listIt)->type!=curOperator)
             {
                 listIt--;
-                if ((*listIt)->type=="MATH_OPERATOR")      { this->generateException("value"); }
+                if ((*listIt)->type==curOperator)      { this->generateException("value"); }
                 else { listIt++; }
 
                 if (curLineNum < (*listIt)->line)
@@ -282,7 +297,7 @@ void Parser::expressionCheck(bool inBrackets)
             else 
             {
                 listIt--;
-                if ((*listIt)->type=="MATH_OPERATOR")      { this->generateException("value"); }
+                if ((*listIt)->type==curOperator)      { this->generateException("value"); }
                 else { listIt++; }
 
                 listIt++; 
@@ -315,6 +330,7 @@ void Parser::expressionCheck(bool inBrackets)
                 if ((*listIt)->type == "R_BRACKET") { break; }
                 else { this->generateException(")"); }
             }
+            else if ((*listIt)->type == "L_BRACE" or (*listIt)->type == "R_BRACE") { break; }
             else { this->generateException("math. operator or \\n"); }
         }
     }
@@ -325,9 +341,77 @@ void Parser::opReturnCheck()
     curLineNum = (*listIt)->line;
     listIt++;
 
+    if (listIt == tokenList.end()) { return; }
     if ((*listIt)->type == "SEPARATOR") { listIt++; }
     else
     {
         if (curLineNum == (*listIt)->line) { this->expressionCheck(); }
     }
+}
+
+void Parser::opBreakCheck()
+{
+    curLineNum = (*listIt)->line;
+    listIt++;
+
+    if (listIt == tokenList.end()) { return; }
+    if ((*listIt)->type == "SEPARATOR") { listIt++; }
+    else
+    {
+        if (curLineNum == (*listIt)->line) { this->generateException("; or \\n"); }
+    }
+}
+
+void Parser::opContinueCheck()
+{
+    curLineNum = (*listIt)->line;
+    listIt++;
+
+    if (listIt == tokenList.end()) { return; }
+    if ((*listIt)->type == "SEPARATOR") { listIt++; }
+    else
+    {
+        if (curLineNum == (*listIt)->line) { this->generateException("; or \\n"); }
+    }
+}
+
+void Parser::opIfCheck()
+{
+    listIt++;
+
+    this->expressionCheck(false, true);
+
+    this->blockCheck();
+
+    if (listIt == tokenList.end()) { return; }
+    else if ((*listIt)->type == "ELIF_KW") { this->opElifCheck(); }
+    else if ((*listIt)->type == "ELSE_KW") { this->opElseCheck(); }
+}
+
+void Parser::opElifCheck()
+{
+    listIt++;
+
+    this->expressionCheck(false, true);
+
+    this->blockCheck();
+
+    if (listIt == tokenList.end()) { return; }
+    else if ((*listIt)->type == "ELIF_KW") { this->opElifCheck(); }
+    else if ((*listIt)->type == "ELSE_KW") { this->opElseCheck(); }
+}
+
+void Parser::opElseCheck()
+{
+    listIt++;
+    this->blockCheck();
+}
+
+void Parser::opWhileCheck()
+{
+    listIt++;
+
+    this->expressionCheck(false, true);
+
+    this->blockCheck();
 }
