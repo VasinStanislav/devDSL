@@ -4,9 +4,9 @@ int execApp()
 {
     std::ifstream in("../resources/program.dsl");
 
-    V list = *analyze(&in);
+    V list      = *analyze(&in);
 
-    parse(&list);
+    bool parsed = list.empty() ? false : parse(&list) == 0;
 
     return 0;
 }
@@ -15,7 +15,7 @@ V * analyze(std::ifstream *input)
 {
     Lexer lexer;
 
-    V *tokenList;
+    V *tokenList = new V(0);
     if (input->is_open())
     {
         tokenList = lexer.tokenize(input);
@@ -26,13 +26,10 @@ V * analyze(std::ifstream *input)
     }
     input->close();
 
-    if (!tokenList->empty())
+    for (const auto &el : *tokenList)
     {
-        for (const auto &el : *tokenList)
-        {
-            std::cout<<std::setw(32)<<std::left<<el->value.c_str()<<":";
-            std::cout<<std::setw(24)<<std::right<<el->type.c_str()<<"\n";
-        }
+        std::cout<<std::setw(32)<<std::left<<el->value.c_str()<<":";
+        std::cout<<std::setw(24)<<std::right<<el->type.c_str()<<"\n";
     }
 
     return tokenList;
@@ -41,7 +38,5 @@ V * analyze(std::ifstream *input)
 int parse(V *tokenList)
 {
     Parser parser(tokenList);
-    parser.lang();
-
-    return 0;
+    return parser.lang();
 }

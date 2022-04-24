@@ -26,13 +26,13 @@ struct ParsingException : public std::exception
 
 class Parser
 {
-        unsigned int curLineNum;
+        int curLineNum;
+        const int lines;
         V tokenList;
         VecIt listIt;
 
         // exceptions processing
-        string generateException(string, bool);
-        void handleException(const string &);
+        string generateException(string, string);
         void generateFailure();
 
         // trying to parse something
@@ -73,7 +73,8 @@ class Parser
         Parser(V *);
         ~Parser();
 
-        void lang();
+        int lang();
+        string getCurType();
 };
 
 typedef std::pair<const char *,void(Parser::*)()> KeyFunc;
