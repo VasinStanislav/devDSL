@@ -31,7 +31,7 @@ V * analyze(std::ifstream *input)
         for (const auto &el : *tokenList)
         {
             std::cout<<std::setw(32)<<std::left<<el->value.c_str()<<":";
-            std::cout<<std::setw(16)<<std::right<<el->type.c_str()<<"\n";
+            std::cout<<std::setw(24)<<std::right<<el->type.c_str()<<"\n";
         }
     }
 
@@ -41,7 +41,7 @@ V * analyze(std::ifstream *input)
 int parse(V *tokenList)
 {
     Parser parser(tokenList);
-    parser.syntaxCheck();
+    parser.lang();
 
     return 0;
 }
