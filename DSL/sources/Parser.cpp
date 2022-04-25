@@ -16,6 +16,7 @@ int Parser::lang()
     std::cout<<"in lang!\n";
     try {  while (listIt != tokenList.end()) { this->expr(); }  }
     catch (ParsingException &e) { return 1; }
+    std::cout<<"parsed successfully!\n";
     return 0;
 }
 
