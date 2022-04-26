@@ -20,7 +20,7 @@ int Parser::lang()
     return 0;
 }
 
-// expr -> (functionDef | functionCall | assignment | opIf | opWhile){1}
+// expr -> (functionDef | functionCall | assignment | opIf | opWhile | opDoWhile){1}
 
 void Parser::expr()
 {
@@ -28,7 +28,8 @@ void Parser::expr()
     {
         {"functionDef", &Parser::functionDef}, {"functionCall", &Parser::functionCall},
         {"assignment", &Parser::assignment}, {"opIf", &Parser::opIf},
-        {"opWhile", &Parser::opWhile}, {"failure", &Parser::generateFailure}
+        {"opWhile", &Parser::opWhile}, {"opDoWhile", &Parser::opDoWhile},
+        {"failure", &Parser::generateFailure}
     };
     VecIt fixedIt = listIt;
 
@@ -120,7 +121,7 @@ void Parser::functionCall()
 void Parser::block()
 {
     // block -> (\{){1}
-    // (functionDef|functionCall|assignment|opIf|opReturn|opWhile|opBreak|opContinue)?
+    // (functionDef|functionCall|assignment|opIf|opReturn|opWhile|opDoWhile|opBreak|opContinue)?
     // (\}){1}
     this->lBrace();
 
@@ -129,8 +130,8 @@ void Parser::block()
         {"functionDef", &Parser::functionDef}, {"functionCall", &Parser::functionCall},
         {"assignment", &Parser::assignment}, {"opIf", &Parser::opIf},
         {"opReturn", &Parser::opReturn}, {"opWhile", &Parser::opWhile},
-        {"opBreak", &Parser::opBreak}, {"opContinue", &Parser::opContinue},
-        {"failure", &Parser::generateFailure}
+        {"opDoWhile", &Parser::opDoWhile}, {"opBreak", &Parser::opBreak}, 
+        {"opContinue", &Parser::opContinue}, {"failure", &Parser::generateFailure}
     };
     VecIt fixedIt = listIt;    
 
@@ -175,7 +176,7 @@ void Parser::assignment()
 void Parser::arithmeticExpression()
 {
     // arithmeticExpression -> ( (\(arithmeticExpression{1}\)mathOp{1})?notEndLine{1}
-    // value{1}((mathOp{1}arithmeticExpression{1})|((;)?)){1}
+    // unaryOP?value{1}unaryOp?((mathOp{1}arithmeticExpression{1})|((;)?)){1}
     do 
     {
         try
@@ -191,7 +192,11 @@ void Parser::arithmeticExpression()
     } while (false);
 
     this->notEndLine();
+    try { this->unaryOp(); }
+    catch(ParsingException & e){}
     this->value();
+    try { this->unaryOp(); }
+    catch(ParsingException & e){}
 
     try { this->mathOp(); }
     catch (ParsingException & e)
@@ -298,14 +303,27 @@ void Parser::opElif()
 
 void Parser::opElse()
 {
-    // else -> (else){1}block{1}
+    // opElse -> (else){1}block{1}
     this->keyword("else");
     this->block();
 }
 
+void Parser::opDoWhile()
+{
+    // opDoWhile -> (do){1}block{1}(while){1}(\(){1}conditionalExpression{1}(\)){1}separator?
+    this->keyword("do");
+    this->block();
+    this->keyword("while");
+    this->lBracket();
+    this->conditionalExpression();
+    this->rBracket();
+    try { this->separator(); }
+    catch(ParsingException & e){}
+}
+
 void Parser::opWhile()
 {
-    // while -> (while){1}(\(){1}conditionalExpression{1}(\)){1}block{1}
+    // opWhile -> (while){1}(\(){1}conditionalExpression{1}(\)){1}block{1}
     this->keyword("while");
     this->lBracket();
     this->conditionalExpression();
@@ -428,6 +446,32 @@ void Parser::assignOp()
     else if ((*listIt)->type != "ASSIGN_OPERATOR")
     {
         throw ParsingException(generateException(std::string("="), (*listIt)->type));
+    }
+    else { listIt++; }   
+}
+
+void Parser::unaryOp()
+{
+    if (listIt == tokenList.end())
+    {
+        throw ParsingException(generateException(std::string("unary operator"), string("nothing")));
+    }
+    else if ((*listIt)->type != "UNARY_OPERATOR")
+    {
+        throw ParsingException(generateException(std::string("unary operator"), (*listIt)->type));
+    }
+    else { listIt++; }   
+}
+
+void Parser::logicalNegation()
+{
+    if (listIt == tokenList.end())
+    {
+        throw ParsingException(generateException(std::string("!"), string("nothing")));
+    }
+    else if ((*listIt)->type != "LOGICAL_NEGATION")
+    {
+        throw ParsingException(generateException(std::string("!"), (*listIt)->type));
     }
     else { listIt++; }   
 }

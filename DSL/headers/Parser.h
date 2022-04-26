@@ -52,6 +52,7 @@ class Parser
         void opIf();
         void opElif();
         void opElse();
+        void opDoWhile();
         void opWhile();
 
         // athoms:
@@ -64,6 +65,8 @@ class Parser
         void lBrace();
         void rBrace();
         void assignOp();
+        void unaryOp();
+        void logicalNegation();
         void value();
         void mathOp();
         void separator();

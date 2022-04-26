@@ -6,9 +6,11 @@ Lexer::Lexer()
     lexems.fill("FUNCTION",            (regex)(R"(^[a-z\_]{1}[0-9a-zA-Z\_]{0,31}\(\)$)"));
     lexems.fill("INTEGER",             (regex)(R"(^0|([1-9][0-9]*)$)"));
     lexems.fill("STRING",              (regex)(R"(^\"[0-9a-zA-Z\*\\/&\_\.\,\;\\\!\?\- )\(]*\"$)"));
+    lexems.fill("UNARY_OPERATOR",      (regex)(R"(^~|([+]{2})|([-]{2})$)"));
+    lexems.fill("LOGICAL_NEGATION",    (regex)(R"(^(!)$)"));
     lexems.fill("MATH_OPERATOR",       (regex)(R"(^[%+*\-\\]$)"));
     lexems.fill("ASSIGN_OPERATOR",     (regex)(R"(^(=)$)"));
-    lexems.fill("COMPRASION_OPERATOR", (regex)(R"(^[<>!]|(>=)|(<=)|(==)$)"));
+    lexems.fill("COMPRASION_OPERATOR", (regex)(R"(^[<>]|(>=)|(<=)|(==)$)"));
     lexems.fill("L_BRACKET",           (regex)(R"(^\($)"));
     lexems.fill("R_BRACKET",           (regex)(R"(^\)$)"));
     lexems.fill("L_BRACE",             (regex)(R"(^\{$)"));
@@ -20,10 +22,12 @@ Lexer::Lexer()
     keyWords.fill("IF_KW",             (regex)(R"(^(if)$)"));
     keyWords.fill("ELSE_KW",           (regex)(R"(^(else)$)"));
     keyWords.fill("ELIF_KW",           (regex)(R"(^(elif)$)"));
+    keyWords.fill("DO_KW",             (regex)(R"(^(do)$)"));
     keyWords.fill("WHILE_KW",          (regex)(R"(^(while)$)"));
     keyWords.fill("FOR_KW",            (regex)(R"(^(for)$)"));
     keyWords.fill("RETURN_KW",         (regex)(R"(^(return)$)"));
     keyWords.fill("BREAK_KW",          (regex)(R"(^(break)$)"));
+    keyWords.fill("GATES_KW",          (regex)(R"(^(or|and|nor|nand)$)"));
     keyWords.fill("CONTINUE_KW",       (regex)(R"(^(continue)$)"));
 }
 
