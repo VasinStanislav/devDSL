@@ -70,6 +70,7 @@ class Parser
         void value();
         void mathOp();
         void separator();
+        void logicalOp();
         void comprOp();
         void notEndLine();
     public:

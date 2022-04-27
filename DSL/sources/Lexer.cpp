@@ -8,6 +8,7 @@ Lexer::Lexer()
     lexems.fill("STRING",              (regex)(R"(^\"[0-9a-zA-Z\*\\/&\_\.\,\;\\\!\?\- )\(]*\"$)"));
     lexems.fill("UNARY_OPERATOR",      (regex)(R"(^~|([+]{2})|([-]{2})$)"));
     lexems.fill("LOGICAL_NEGATION",    (regex)(R"(^(!)$)"));
+    lexems.fill("LOGICAL_OPERATOR",    (regex)(R"(^(\|\||&&|^|\|\|^&&)$)"));
     lexems.fill("MATH_OPERATOR",       (regex)(R"(^[%+*\-\\]$)"));
     lexems.fill("ASSIGN_OPERATOR",     (regex)(R"(^(=)$)"));
     lexems.fill("COMPRASION_OPERATOR", (regex)(R"(^[<>]|(>=)|(<=)|(==)$)"));
@@ -27,7 +28,6 @@ Lexer::Lexer()
     keyWords.fill("FOR_KW",            (regex)(R"(^(for)$)"));
     keyWords.fill("RETURN_KW",         (regex)(R"(^(return)$)"));
     keyWords.fill("BREAK_KW",          (regex)(R"(^(break)$)"));
-    keyWords.fill("GATES_KW",          (regex)(R"(^(or|and|nor|nand)$)"));
     keyWords.fill("CONTINUE_KW",       (regex)(R"(^(continue)$)"));
 }
 
@@ -95,8 +95,16 @@ str_pair Lexer::nipOff(string line)
                 }
                 else 
                 {
-                    curStr.erase(curStr.length()-1);
-                    break;
+                    if (curStr.length() == 1) 
+                    {
+                        line = line.substr(1);
+                        curStr += line[0];
+                    }
+                    else 
+                    {
+                        curStr.erase(curStr.length()-1);
+                        break;
+                    }
                 }
             }
 

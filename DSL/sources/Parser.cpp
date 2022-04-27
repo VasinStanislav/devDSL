@@ -210,32 +210,43 @@ void Parser::arithmeticExpression()
 
 void Parser::conditionalExpression()
 {
-    // conditionalExpression -> ( (\(conditionalExpression{1}\)comprOp{1})?notEndLine{1}
-    // value{1}((comprOp{1}conditionalExpression{1})|((;)?)){1}
+    // conditionalExpression -> ( (\(conditionalExpression{1}\)(comprOp{1}|logicalOp))?notEndLine{1}
+    // arithmeticExpression{1}(((comprOp{1}|logicalOp{1})conditionalExpression{1})|((;)?)){1}
+    try { this->logicalNegation(); }
+    catch (ParsingException & e){}
+
     do 
     {
         try
         {
-            try {this->lBracket();}
+            try { this->lBracket(); }
             catch (ParsingException & e) { break; }
             this->conditionalExpression();
             this->rBracket();
-            try { this->comprOp(); }
+            try { this->comprOp(); break; }
+            catch (ParsingException & e) {}
+            try { this->logicalOp(); }
             catch (ParsingException & e) { return; }
         }
         catch (ParsingException & e) { throw e; }
     } while (false);
 
     this->notEndLine();
-    this->value();
+    this->arithmeticExpression();
 
-    try { this->comprOp(); }
-    catch (ParsingException & e)
+    do
     {
-        try { this->separator(); }
+        try { this->comprOp(); break; }
         catch (ParsingException & e){}
-        return;
-    }
+        try { this->logicalOp(); }
+        catch (ParsingException & e)
+        {
+            try { this->separator(); }
+            catch (ParsingException & e){}
+            return;
+        }
+    } while (false);
+
     this->conditionalExpression();
 }
 
@@ -525,6 +536,19 @@ void Parser::comprOp()
     else if ((*listIt)->type != "COMPRASION_OPERATOR")
     {
         throw ParsingException(generateException(std::string("compr. operator"), (*listIt)->type));
+    }
+    else { listIt++; }   
+}
+
+void Parser::logicalOp()
+{
+    if (listIt == tokenList.end())
+    {
+        throw ParsingException(generateException(std::string("logical operator"), string("nothing")));
+    }
+    else if ((*listIt)->type != "LOGICAL_OPERATOR")
+    {
+        throw ParsingException(generateException(std::string("logical operator"), (*listIt)->type));
     }
     else { listIt++; }   
 }
