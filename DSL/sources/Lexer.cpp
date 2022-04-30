@@ -4,11 +4,12 @@ Lexer::Lexer()
 {
     lexems.fill("VARIABLE",            (regex)(R"(^[a-zA-Z\_]{1}[0-9a-zA-Z\_]{0,31}$)"));
     lexems.fill("FUNCTION",            (regex)(R"(^[a-z\_]{1}[0-9a-zA-Z\_]{0,31}\(\)$)"));
+    lexems.fill("CONSTRUCTOR",         (regex)(R"(^[A-Z\_]{1}[0-9a-zA-Z\_]{0,31}\(\)$)"));
     lexems.fill("INTEGER",             (regex)(R"(^0|([1-9][0-9]*)$)"));
+    lexems.fill("FLOAT",               (regex)(R"(^(0|([1-9][0-9]*)\.[0-9]*([eE][-+][0-9]+)?)$)"));
     lexems.fill("STRING",              (regex)(R"(^\"[0-9a-zA-Z\*\\/&\_\.\,\;\\\!\?\- )\(]*\"$)"));
     lexems.fill("UNARY_OPERATOR",      (regex)(R"(^~|([+]{2})|([-]{2})$)"));
     lexems.fill("LOGICAL_NEGATION",    (regex)(R"(^(!)$)"));
-    lexems.fill("LOGICAL_OPERATOR",    (regex)(R"(^(\|\||&&|^|\|\|^&&)$)"));
     lexems.fill("MATH_OPERATOR",       (regex)(R"(^[%+*\-\\]$)"));
     lexems.fill("ASSIGN_OPERATOR",     (regex)(R"(^(=)$)"));
     lexems.fill("COMPRASION_OPERATOR", (regex)(R"(^[<>]|(>=)|(<=)|(==)$)"));
@@ -20,6 +21,9 @@ Lexer::Lexer()
     lexems.fill("SEPARATOR",           (regex)(R"(^\;$)"));
 
     keyWords.fill("DEFINITION_KW",     (regex)(R"(^(def)$)"));
+    keyWords.fill("ALLOCATION_KW",     (regex)(R"(^(new)$)"));
+    keyWords.fill("LOGICAL_KW",        (regex)(R"(^(and|or|nand|nor)$)"));
+    keyWords.fill("CONSTANT_KW",       (regex)(R"(^(true|false)$)"));
     keyWords.fill("IF_KW",             (regex)(R"(^(if)$)"));
     keyWords.fill("ELSE_KW",           (regex)(R"(^(else)$)"));
     keyWords.fill("ELIF_KW",           (regex)(R"(^(elif)$)"));

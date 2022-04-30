@@ -5,10 +5,15 @@
 #include <iostream>
 #include <cstring>
 #include "Token.h"
+#include "AST.h"
 
-typedef std::vector<Token *> V;
-typedef V::iterator VecIt;
-typedef std::string string;
+class Parser;
+
+typedef std::vector<Token *>                      V;
+typedef V::iterator                               VecIt;
+typedef std::string                               string;
+typedef std::pair<const char *,void(Parser::*)()> KeyFunc;
+typedef std::vector<KeyFunc>                      FuncV;
 
 struct ParsingException : public std::exception
 {
@@ -44,6 +49,7 @@ class Parser
         void args();
         void block();
         void assignment();
+        void allocation();
         void arithmeticExpression();
         void conditionalExpression();
         void opReturn();
@@ -57,6 +63,7 @@ class Parser
 
         // athoms:
         void keyword(string);
+        void constructor();
         void function();
         void lBracket();
         void variable();
@@ -72,6 +79,7 @@ class Parser
         void separator();
         void logicalOp();
         void comprOp();
+        void endLine();
         void notEndLine();
     public:
         Parser(V *);
@@ -80,8 +88,5 @@ class Parser
         int lang();
         string getCurType();
 };
-
-typedef std::pair<const char *,void(Parser::*)()> KeyFunc;
-typedef std::vector<KeyFunc> FuncV;
 
 #endif
