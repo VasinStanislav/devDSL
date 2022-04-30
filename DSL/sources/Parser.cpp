@@ -14,6 +14,8 @@ Parser::~Parser()
 int Parser::lang()
 {   
     std::cout<<"in lang!\n";
+
+    AST tree(std::make_pair(string("lang"), string("")));
     try {  while (listIt != tokenList.end()) { this->expr(); }  }
     catch (ParsingException &e) { return 1; }
     std::cout<<"parsed successfully!\n";
@@ -53,7 +55,7 @@ void Parser::expr()
     }
 }
 
-/* --------------------------------------------EXCEPTIONS-------------------------------------------- */
+/*---------------------------------------------EXCEPTIONS---------------------------------------------*/
 
 string Parser::generateException(string expected, string provided)
 {
@@ -64,7 +66,7 @@ string Parser::generateException(string expected, string provided)
 
 void Parser::generateFailure() { throw ParsingException(std::string("failed to parse")); }
 
-/* ------------------------------------------EXPRESSIONS--------------------------------------------- */
+/*-------------------------------------------EXPRESSIONS----------------------------------------------*/
 
 void Parser::functionDef()
 {

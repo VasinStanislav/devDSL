@@ -1,88 +1,111 @@
-#ifndef EXPRAST_H
-#define EXPRAST_H
+#ifndef EXPRASTNode_H
+#define EXPRASTNode_H
 
 #include <string>
 #include <vector>
 
-/*-------------------------------------------BASE-----------------------------------------------*/
+/*-base-*/ class ExprASTNode; 
 
-class ExprAST 
+typedef std::string                 string;
+typedef const std::string &         ConstStrRef;
+typedef std::pair<string, string>   StrPair;
+typedef const StrPair               ConstStrPairRef;
+typedef std::vector<string>         StrV;
+typedef const StrV &                ConstStrVRef;
+typedef std::vector<ExprASTNode *>  NodeV;
+
+/*----------------------------------------------BASE--------------------------------------------------*/
+
+class ExprASTNode 
 {
-        std::string type;
+        StrPair label;
+        NodeV children;
     public:
-        ExprAST(const std::string &type="") : type(type) {}
-        virtual ~ExprAST() {}
+        ExprASTNode(ConstStrRef name="", ConstStrRef type="") : label(std::make_pair(name, type)) {}
+        ExprASTNode(StrPair label) : label(label) {}
+        virtual ~ExprASTNode() { for (size_t i = 0; i < children.size(); ++i) { delete children[i]; } }
 
-        void setType(const std::string &type) { this->type = type; }
-        const std::string &getType() { return this->type; }
+        void setLabel(ConstStrRef name, ConstStrRef type) { this->label = std::make_pair(name, type); }
+        void setLabel(StrPair label) { this->label = label; }
+        ConstStrPairRef getLabel() { return this->label; }
+        void addChild(ExprASTNode *child) { this->children.push_back(child); }
+        NodeV getChildren() { return children; }                                                  
 };
 
-/*-----------------------------------LITERALS, OPERATIONS---------------------------------------*/
+class AST
+{
+        ExprASTNode root;
+    public:
+        AST(StrPair label)    : root(ExprASTNode(label)){}
+        AST(ExprASTNode root) : root(ExprASTNode(root)){}
+};
 
-class IntExprAST : public ExprAST 
+/*-----------------------------------------LITERALS, OPERATIONS---------------------------------------*/
+/*
+class IntExprASTNode : public ExprASTNode 
 {
         long long value;
     public:
-        IntExprAST(long long value) : ExprAST("INTEGER"), value(value) {}
+        IntExprASTNode(long long value) : ExprASTNode("INTEGER"), value(value) {}
 };
 
-class FloatExprAST : public ExprAST 
+class FloatExprASTNode : public ExprASTNode 
 {
         double long value;
     public:
-        FloatExprAST(double long value) : ExprAST("FLOAT"), value(value) {}
+        FloatExprASTNode(double long value) : ExprASTNode("FLOAT"), value(value) {}
 };
 
-class StringExprAST : public ExprAST 
+class StringExprASTNode : public ExprASTNode 
 {
-        std::string value;
+        string value;
     public:
-        StringExprAST(const std::string &value) : ExprAST("STRING"), value(value) {}
+        StringExprASTNode(ConstStrRef &value) : ExprASTNode("STRING"), value(value) {}
 };
 
-class VariableExprAST : public ExprAST 
+class VariableExprASTNode : public ExprASTNode 
 {
-        std::string name;
+        string name;
     public:
-        VariableExprAST(const std::string &name, const std::string &type)
-            : ExprAST(type), name(name) {}
+        VariableExprASTNode(ConstStrRef name, ConstStrRef type)
+            : ExprASTNode(type), name(name) {}
 };
 
-class BinaryOpExprAST : public ExprAST
+class BinaryOpExprASTNode : public ExprASTNode
 {
         char op;
-        ExprAST *lHS, *rHS;
+        ExprASTNode *lHS, *rHS;
     public:
-        BinaryOpExprAST(ExprAST *lHS, ExprAST *rHS, char op)
+        BinaryOpExprASTNode(ExprASTNode *lHS, ExprASTNode *rHS, char op)
             : lHS(lHS), rHS(rHS), op(op) {}
 };
-
-/*----------------------------------FUNCTION DEFS, FUNCTION CALLS-------------------------------*/
-
-class FuncCallExprAST : public ExprAST
+*/
+/*------------------------------------FUNCTION DEFS, FUNCTION CALLS-----------------------------------*/
+/*
+class FuncCallExprASTNode : public ExprASTNode
 {
-        std::string call;
-        std::vector<ExprAST *> args;
+        string call;
+        NodeV args;
     public:
-        FuncCallExprAST(const std::string &call, std::vector<ExprAST *> &args)
+        FuncCallExprASTNode(ConstStrRef &call, NodeV &args)
             : call(call), args(args) {}
 };
 
-class FuncPrototypeAST : public ExprAST 
+class FuncPrototypeASTNode : public ExprASTNode 
 {
-        std::string name;
-        std::vector<std::string> args;
+        string name;
+        StrV args;
     public:
-        FuncPrototypeAST(const std::string &name, const std::vector<std::string> &args)
+        FuncPrototypeASTNode(ConstStrRef name, ConstStrVRef args)
             : name(name), args(args) {}
 };
 
-class FunctionAST {
-        FuncPrototypeAST *proto;
-        ExprAST *block;
+class FunctionASTNode {
+        FuncPrototypeASTNode *proto;
+        ExprASTNode *block;
     public:
-        FunctionAST(FuncPrototypeAST *proto, ExprAST *block)
+        FunctionASTNode(FuncPrototypeASTNode *proto, ExprASTNode *block)
             : proto(proto), block(block) {}
 };
-
+*/
 #endif
