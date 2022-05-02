@@ -2,11 +2,17 @@
 
 int execApp()
 {
+    std::cout<<std::setw(29)<<std::setfill('*')<<std::right<<"DEV";
+    std::cout<<std::setw(28)<<std::left<<"DSL"<<"\n";
+
     std::ifstream in("../resources/program.dsl");
 
     V list      = *analyze(&in);
 
     bool parsed = list.empty() ? false : parse(&list) == 0;
+
+    std::cout<<std::setw(29)<<std::setfill('*')<<std::right<<"";
+    std::cout<<std::setw(28)<<std::left<<""<<std::setfill(' ')<<"\n";
 
     return 0;
 }
@@ -25,6 +31,9 @@ V * analyze(std::ifstream *input)
         std::cerr<<"Oops!"<<"\n";
     }
     input->close();
+
+    std::cout<<std::setw(29)<<std::right<<"Lex";
+    std::cout<<std::setw(28)<<std::left<<"er"<<std::setfill(' ')<<"\n";
 
     for (const auto &el : *tokenList)
     {

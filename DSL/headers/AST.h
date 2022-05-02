@@ -23,32 +23,35 @@ class ASTNode
         ASTNode *parentPtr;
         Token    label;
         NodeV    children;
+    protected:
+        NodeV *getChildrenPtr();
     public:
         ASTNode();
         ASTNode(Token, ASTNode *parentPtr=nullptr);
-        ASTNode(ConstStrRef, ConstStrRef, unsigned int, ASTNode *parentPtr=nullptr);
      /*-virtual-*/ ~ASTNode();
+
+        void setParentPtr(ASTNode *);
+        ASTNode * getParentPtr();
 
         void setLabel(Token);
         void setLabel(ConstStrRef, ConstStrRef, unsigned int);
         Token getLabel();
 
-        void setParentPtr(ASTNode *);
-        ASTNode * getParentPtr();
-
         void addChild(ASTNode *);
-        NodeV getChildren();
+
+        virtual ASTNode * getLastNode();
+        void deleteLastChild();
 
         void showTree();
 };
 
-/*class AST
+class AST : public ASTNode
 {
-        ASTNode root;
     public:
-        AST(Token label);
-        AST(ASTNode root);
-};*/
+        AST(Token);
+        ASTNode * getLastNode();
+        void deleteLastNode();
+};
 
 /*-----------------------------------------LITERALS, OPERATIONS---------------------------------------*/
 /*

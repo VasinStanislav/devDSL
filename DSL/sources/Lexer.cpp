@@ -19,6 +19,7 @@ Lexer::Lexer()
     lexems.fill("R_BRACE",             (regex)(R"(^\}$)"));
     lexems.fill("ARG_SEPARATOR",       (regex)(R"(^\,$)"));
     lexems.fill("SEPARATOR",           (regex)(R"(^\;$)"));
+    lexems.fill("COMMENT",             (regex)(R"(^# $)"));
 
     keyWords.fill("DEFINITION_KW",     (regex)(R"(^(def)$)"));
     keyWords.fill("ALLOCATION_KW",     (regex)(R"(^(new)$)"));
@@ -62,6 +63,8 @@ str_pair Lexer::nipOff(string line)
     {
         line = line.substr(1);
     }
+
+    if (line[0] == '#') { curStr = "# "; line = ""; return {curStr, line}; }
 
     if (line[0] == '(' or line[0] == ')' or line[0] == '{' or line[0] == '}')
     {
@@ -161,7 +164,10 @@ V * Lexer::tokenize(std::ifstream *input)
                             if (keyWDToken != "") { type = keyWDToken; }
                         }
 
-                        tokenList->push_back(new Token{lines.first, type, strNum});
+                        if (type != "COMMENT")
+                        {
+                            tokenList->push_back(new Token{lines.first, type, strNum});
+                        }
                     }
                     else 
                     {
