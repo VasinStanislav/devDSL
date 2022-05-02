@@ -1,7 +1,7 @@
 #include "../headers/Parser.h"
 
 Parser::Parser(V *tokenList) : tokenList(*tokenList), listIt(this->tokenList.begin()),
-                               curLineNum(1), lines((tokenList->back())->line){}
+    curLineNum(1), lines((tokenList->back())->line), tree("lang", "", curLineNum){}
 
 Parser::~Parser()
 {
@@ -15,17 +15,19 @@ int Parser::lang()
 {   
     std::cout<<"in lang!\n";
 
-    AST tree(std::make_pair(string("lang"), string("")));
-    try {  while (listIt != tokenList.end()) { this->expr(); }  }
+    try {  while ((*listIt)->type != "EOF") { this->expr(); }  }
     catch (ParsingException &e) { return 1; }
     std::cout<<"parsed successfully!\n";
+    this->tree.showTree();
     return 0;
 }
 
 // expr -> (functionDef | functionCall | assignment | opIf | opWhile | opDoWhile){1}
-
+ 
 void Parser::expr()
 {
+    unsigned int fixedLineNum = this->curLineNum;
+
     const FuncV expressions =
     {
         {"functionDef", &Parser::functionDef}, {"functionCall", &Parser::functionCall},
@@ -53,13 +55,16 @@ void Parser::expr()
             listIt = fixedIt;
         }
     }
+
+    ASTNode *expr = new ASTNode(Token({"expr", "", fixedLineNum}), &tree);
+    this->tree.addChild(expr);
 }
 
 /*---------------------------------------------EXCEPTIONS---------------------------------------------*/
 
 string Parser::generateException(string expected, string provided)
 {
-    curLineNum = provided == "nothing" ? lines : (*listIt)->line;
+    curLineNum = (*listIt)->line;
     return "in line " + std::to_string(curLineNum) + "\nexpected: " + expected + "; " +
             provided + " was provided";
 }
@@ -82,7 +87,7 @@ void Parser::functionDef()
         this->block();
         return;
     }
-    while (listIt!=tokenList.end())
+    while ((*listIt)->type != "EOF")
     {
         try { this->argsSeparator(); }
         catch (ParsingException &e) { break; }
@@ -106,7 +111,7 @@ void Parser::functionCall()
         this->rBracket();
         return;
     }
-    while (listIt!=tokenList.end())
+    while ((*listIt)->type != "EOF")
     {
         try { this->argsSeparator(); }
         catch (ParsingException &e) { break; }
@@ -138,7 +143,7 @@ void Parser::block()
     VecIt fixedIt = listIt;    
 
     std::cout<<"in block!\n";
-    while (listIt!=tokenList.end())
+    while ((*listIt)->type != "EOF")
     {
         try
         {
@@ -190,7 +195,7 @@ void Parser::allocation()
         this->rBracket();
         return;
     }
-    while (listIt!=tokenList.end())
+    while ((*listIt)->type != "EOF")
     {
         try { this->argsSeparator(); }
         catch (ParsingException &e) { break; }
@@ -382,11 +387,7 @@ void Parser::opWhile()
 
 void Parser::keyword(string concrete)
 {
-    if (listIt == tokenList.end()) 
-    {
-        throw ParsingException(generateException(concrete, string("nothing")));
-    }
-    else if (std::strcmp((*listIt)->value.c_str(), concrete.c_str()) != 0) 
+    if (std::strcmp((*listIt)->value.c_str(), concrete.c_str()) != 0) 
     {
         throw ParsingException(generateException(concrete, (*listIt)->type)); 
     }
@@ -395,11 +396,7 @@ void Parser::keyword(string concrete)
 
 void Parser::constructor()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(string("constructor"), string("nothing")));
-    }
-    else if ((*listIt)->type != "CONSTRUCTOR")
+    if ((*listIt)->type != "CONSTRUCTOR")
     {
         throw ParsingException(generateException(string("constructor"), (*listIt)->type));
     }
@@ -408,11 +405,7 @@ void Parser::constructor()
 
 void Parser::function()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(string("function"), string("nothing")));
-    }
-    else if ((*listIt)->type != "FUNCTION")
+    if ((*listIt)->type != "FUNCTION")
     {
         throw ParsingException(generateException(string("function"), (*listIt)->type));
     }
@@ -421,11 +414,7 @@ void Parser::function()
 
 void Parser::lBracket()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(std::string("'('"), string("nothing")));
-    }
-    else if ((*listIt)->type != "L_BRACKET")
+    if ((*listIt)->type != "L_BRACKET")
     {
         throw ParsingException(generateException(std::string("'('"), (*listIt)->type));
     }
@@ -434,11 +423,7 @@ void Parser::lBracket()
 
 void Parser::variable()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(std::string("variable"), string("nothing")));
-    }
-    else if ((*listIt)->type != "VARIABLE")
+    if ((*listIt)->type != "VARIABLE")
     {
         throw ParsingException(generateException(std::string("variable"), (*listIt)->type));
     }
@@ -447,11 +432,7 @@ void Parser::variable()
 
 void Parser::argsSeparator()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(std::string("','"), string("nothing")));
-    }
-    else if ((*listIt)->type != "ARG_SEPARATOR")
+    if ((*listIt)->type != "ARG_SEPARATOR")
     {
         throw ParsingException(generateException(std::string("','"), (*listIt)->type));
     }
@@ -460,11 +441,7 @@ void Parser::argsSeparator()
 
 void Parser::rBracket()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(std::string("')'"), string("nothing")));
-    }
-    else if ((*listIt)->type != "R_BRACKET")
+    if ((*listIt)->type != "R_BRACKET")
     {
         throw ParsingException(generateException(std::string("')'"), (*listIt)->type));
     }
@@ -473,11 +450,7 @@ void Parser::rBracket()
 
 void Parser::lBrace()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(std::string("'{'"), string("nothing")));
-    }
-    else if ((*listIt)->type != "L_BRACE")
+    if ((*listIt)->type != "L_BRACE")
     {
         throw ParsingException(generateException(std::string("'{'"), (*listIt)->type));
     }
@@ -486,11 +459,7 @@ void Parser::lBrace()
 
 void Parser::rBrace()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(std::string("'}'"), string("nothing")));
-    }
-    else if ((*listIt)->type != "R_BRACE")
+    if ((*listIt)->type != "R_BRACE")
     {
         throw ParsingException(generateException(std::string("'}'"), (*listIt)->type));
     }
@@ -499,11 +468,7 @@ void Parser::rBrace()
 
 void Parser::assignOp()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(std::string("'='"), string("nothing")));
-    }
-    else if ((*listIt)->type != "ASSIGN_OPERATOR")
+    if ((*listIt)->type != "ASSIGN_OPERATOR")
     {
         throw ParsingException(generateException(std::string("'='"), (*listIt)->type));
     }
@@ -512,11 +477,7 @@ void Parser::assignOp()
 
 void Parser::unaryOp()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(std::string("unary operator"), string("nothing")));
-    }
-    else if ((*listIt)->type != "UNARY_OPERATOR")
+    if ((*listIt)->type != "UNARY_OPERATOR")
     {
         throw ParsingException(generateException(std::string("unary operator"), (*listIt)->type));
     }
@@ -525,11 +486,7 @@ void Parser::unaryOp()
 
 void Parser::logicalNegation()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(std::string("'!'"), string("nothing")));
-    }
-    else if ((*listIt)->type != "LOGICAL_NEGATION")
+    if ((*listIt)->type != "LOGICAL_NEGATION")
     {
         throw ParsingException(generateException(std::string("'!'"), (*listIt)->type));
     }
@@ -538,11 +495,7 @@ void Parser::logicalNegation()
 
 void Parser::value()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(std::string("value"), string("nothing")));
-    }
-    else if ((*listIt)->type != "INTEGER" and (*listIt)->type != "STRING" and
+    if ((*listIt)->type != "INTEGER" and (*listIt)->type != "STRING" and
              (*listIt)->type != "VARIABLE" and (*listIt)->type != "FLOAT" and
              (*listIt)->type != "CONSTANT_KW")
     {
@@ -553,11 +506,7 @@ void Parser::value()
 
 void Parser::mathOp()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(std::string("math. operator"), string("nothing")));
-    }
-    else if ((*listIt)->type != "MATH_OPERATOR")
+    if ((*listIt)->type != "MATH_OPERATOR")
     {
         throw ParsingException(generateException(std::string("math. operator"), (*listIt)->type));
     }
@@ -566,11 +515,7 @@ void Parser::mathOp()
 
 void Parser::separator()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(std::string("';'"), string("nothing")));
-    }
-    else if ((*listIt)->type != "SEPARATOR")
+    if ((*listIt)->type != "SEPARATOR")
     {
         throw ParsingException(generateException(std::string("';'"), (*listIt)->type));
     }
@@ -579,11 +524,7 @@ void Parser::separator()
 
 void Parser::comprOp()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(std::string("compr. operator"), string("nothing")));
-    }
-    else if ((*listIt)->type != "COMPRASION_OPERATOR")
+    if ((*listIt)->type != "COMPRASION_OPERATOR")
     {
         throw ParsingException(generateException(std::string("compr. operator"), (*listIt)->type));
     }
@@ -592,12 +533,8 @@ void Parser::comprOp()
 
 void Parser::logicalOp()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(std::string("logical operator"), string("nothing")));
-    }
-    else if ((*listIt)->value != "and" and (*listIt)->value != "or" and
-             (*listIt)->value != "nand" and (*listIt)->value != "nor")
+    if ((*listIt)->value != "and" and (*listIt)->value != "or" and
+        (*listIt)->value != "nand" and (*listIt)->value != "nor")
     {
         throw ParsingException(generateException(std::string("logical operator"), (*listIt)->type));
     }
@@ -606,8 +543,6 @@ void Parser::logicalOp()
 
 void Parser::endLine()
 {
-    if (listIt == tokenList.end()) { return; }
-
     listIt--;
     int prevTokenLine  = (*listIt)->line;
     string probablySep = (*listIt)->type;
@@ -623,11 +558,6 @@ void Parser::endLine()
 
 void Parser::notEndLine()
 {
-    if (listIt == tokenList.end())
-    {
-        throw ParsingException(generateException(string("value"), string("nothing")));
-    }
-
     listIt--;
     int prevTokenLine = (*listIt)->line;
 

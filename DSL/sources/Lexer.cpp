@@ -124,10 +124,11 @@ V * Lexer::tokenize(std::ifstream *input)
     V *tokenList = nullptr;
     
     string line = "", curStr = "";
+    unsigned int strNum = 1;
+
     if (input)
     {
         tokenList = new V();
-        unsigned int strNum = 1;
 
         while(std::getline(*input, line, '\n'))
         {
@@ -183,6 +184,9 @@ V * Lexer::tokenize(std::ifstream *input)
             strNum++;
         }
     }
+
+    string value_ = "end of file"; string type_ = "EOF"; unsigned int line_ = (strNum++);
+    tokenList->push_back(new Token{value_, type_, line_});
 
     return tokenList;
 }

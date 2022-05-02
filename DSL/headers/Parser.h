@@ -31,10 +31,11 @@ struct ParsingException : public std::exception
 
 class Parser
 {
-        int curLineNum;
-        const int lines;
+        unsigned int curLineNum;
+        const unsigned int lines;
         V tokenList;
         VecIt listIt;
+        ASTNode tree;
 
         // exceptions processing
         string generateException(string, string);
@@ -86,7 +87,6 @@ class Parser
         ~Parser();
 
         int lang();
-        string getCurType();
 };
 
 #endif

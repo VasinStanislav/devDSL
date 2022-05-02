@@ -1,10 +1,12 @@
 #ifndef EXPRASTNode_H
 #define EXPRASTNode_H
 
+#include <iostream>
 #include <string>
 #include <vector>
+#include "Token.h"
 
-/*-base-*/ class ExprASTNode; 
+/*-base-*/ class ASTNode; 
 
 typedef std::string                 string;
 typedef const std::string &         ConstStrRef;
@@ -12,86 +14,94 @@ typedef std::pair<string, string>   StrPair;
 typedef const StrPair               ConstStrPairRef;
 typedef std::vector<string>         StrV;
 typedef const StrV &                ConstStrVRef;
-typedef std::vector<ExprASTNode *>  NodeV;
+typedef std::vector<ASTNode *>      NodeV;
 
 /*----------------------------------------------BASE--------------------------------------------------*/
 
-class ExprASTNode 
+class ASTNode 
 {
-        StrPair label;
-        NodeV children;
+        ASTNode *parentPtr;
+        Token    label;
+        NodeV    children;
     public:
-        ExprASTNode(ConstStrRef name="", ConstStrRef type="") : label(std::make_pair(name, type)) {}
-        ExprASTNode(StrPair label) : label(label) {}
-        virtual ~ExprASTNode() { for (size_t i = 0; i < children.size(); ++i) { delete children[i]; } }
+        ASTNode();
+        ASTNode(Token, ASTNode *parentPtr=nullptr);
+        ASTNode(ConstStrRef, ConstStrRef, unsigned int, ASTNode *parentPtr=nullptr);
+     /*-virtual-*/ ~ASTNode();
 
-        void setLabel(ConstStrRef name, ConstStrRef type) { this->label = std::make_pair(name, type); }
-        void setLabel(StrPair label) { this->label = label; }
-        ConstStrPairRef getLabel() { return this->label; }
-        void addChild(ExprASTNode *child) { this->children.push_back(child); }
-        NodeV getChildren() { return children; }                                                  
+        void setLabel(Token);
+        void setLabel(ConstStrRef, ConstStrRef, unsigned int);
+        Token getLabel();
+
+        void setParentPtr(ASTNode *);
+        ASTNode * getParentPtr();
+
+        void addChild(ASTNode *);
+        NodeV getChildren();
+
+        void showTree();
 };
 
-class AST
+/*class AST
 {
-        ExprASTNode root;
+        ASTNode root;
     public:
-        AST(StrPair label)    : root(ExprASTNode(label)){}
-        AST(ExprASTNode root) : root(ExprASTNode(root)){}
-};
+        AST(Token label);
+        AST(ASTNode root);
+};*/
 
 /*-----------------------------------------LITERALS, OPERATIONS---------------------------------------*/
 /*
-class IntExprASTNode : public ExprASTNode 
+class IntASTNode : public ASTNode 
 {
         long long value;
     public:
-        IntExprASTNode(long long value) : ExprASTNode("INTEGER"), value(value) {}
+        IntASTNode(long long value) : ASTNode("INTEGER"), value(value) {}
 };
 
-class FloatExprASTNode : public ExprASTNode 
+class FloatASTNode : public ASTNode 
 {
         double long value;
     public:
-        FloatExprASTNode(double long value) : ExprASTNode("FLOAT"), value(value) {}
+        FloatASTNode(double long value) : ASTNode("FLOAT"), value(value) {}
 };
 
-class StringExprASTNode : public ExprASTNode 
+class StringASTNode : public ASTNode 
 {
         string value;
     public:
-        StringExprASTNode(ConstStrRef &value) : ExprASTNode("STRING"), value(value) {}
+        StringASTNode(ConstStrRef &value) : ASTNode("STRING"), value(value) {}
 };
 
-class VariableExprASTNode : public ExprASTNode 
+class VariableASTNode : public ASTNode 
 {
         string name;
     public:
-        VariableExprASTNode(ConstStrRef name, ConstStrRef type)
-            : ExprASTNode(type), name(name) {}
+        VariableASTNode(ConstStrRef name, ConstStrRef type)
+            : ASTNode(type), name(name) {}
 };
 
-class BinaryOpExprASTNode : public ExprASTNode
+class BinaryOpASTNode : public ASTNode
 {
         char op;
-        ExprASTNode *lHS, *rHS;
+        ASTNode *lHS, *rHS;
     public:
-        BinaryOpExprASTNode(ExprASTNode *lHS, ExprASTNode *rHS, char op)
+        BinaryOpASTNode(ASTNode *lHS, ASTNode *rHS, char op)
             : lHS(lHS), rHS(rHS), op(op) {}
 };
 */
 /*------------------------------------FUNCTION DEFS, FUNCTION CALLS-----------------------------------*/
 /*
-class FuncCallExprASTNode : public ExprASTNode
+class FuncCallASTNode : public ASTNode
 {
         string call;
         NodeV args;
     public:
-        FuncCallExprASTNode(ConstStrRef &call, NodeV &args)
+        FuncCallASTNode(ConstStrRef &call, NodeV &args)
             : call(call), args(args) {}
 };
 
-class FuncPrototypeASTNode : public ExprASTNode 
+class FuncPrototypeASTNode : public ASTNode 
 {
         string name;
         StrV args;
@@ -102,9 +112,9 @@ class FuncPrototypeASTNode : public ExprASTNode
 
 class FunctionASTNode {
         FuncPrototypeASTNode *proto;
-        ExprASTNode *block;
+        ASTNode *block;
     public:
-        FunctionASTNode(FuncPrototypeASTNode *proto, ExprASTNode *block)
+        FunctionASTNode(FuncPrototypeASTNode *proto, ASTNode *block)
             : proto(proto), block(block) {}
 };
 */

@@ -38,5 +38,6 @@ V * analyze(std::ifstream *input)
 int parse(V *tokenList)
 {
     Parser parser(tokenList);
-    return parser.lang();
+    int res = parser.lang();
+    return res;
 }
