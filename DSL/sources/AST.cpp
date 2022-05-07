@@ -1,8 +1,10 @@
 #include "../headers/AST.h"
 
-/*-------------------------------------------ASTNODE--------------------------------------------*/
+/*----------------------------------------------ASTNODE-----------------------------------------------*/
 
 ASTNode::ASTNode() : label(), parentPtr(nullptr) {}
+
+ASTNode::ASTNode(ASTNode *parentPtr) : label(), parentPtr(parentPtr) {}
 
 ASTNode::ASTNode(Token label, ASTNode *parentPtr) : label(label), parentPtr(parentPtr) {}
 
@@ -30,6 +32,19 @@ Token ASTNode::getLabel() { return label; }
 
 void ASTNode::addChild(ASTNode *child) { this->children.push_back(child); }
 
+ASTNode * ASTNode::getLastChild()
+{
+    if (this->children.empty()) { return nullptr; }
+    return this->children.back();
+}
+
+void ASTNode::deleteFirstChild()
+{
+    if (this->children.empty()) { return; }
+    auto first = this->children.begin();
+    this->children.erase(first);
+}
+
 void ASTNode::deleteLastChild() 
 {
     if (this->children.empty()) { return; }
@@ -53,7 +68,26 @@ void ASTNode::showTree()
     for (const auto child : this->children) { child->showTree(); }
 }
 
-/*------------------------------------------------AST-------------------------------------------*/
+void swap(ASTNode *opPrev, ASTNode *opNext)
+{
+    // '='
+    ASTNode * ancestorPtr = opPrev->parentPtr;
+    ancestorPtr->deleteLastChild();
+    // '+'
+    opNext->parentPtr     = ancestorPtr;
+    ancestorPtr->addChild(opNext);
+    // '-'
+    opPrev->parentPtr     = opNext;
+    opNext->addChild(opPrev);
+}
+
+bool isEqualWith(ASTNode & node, ConstStrRef strRef)
+{
+    // node.label.
+    return false;
+}
+
+/*--------------------------------------------------AST-----------------------------------------------*/
 
 AST::AST(Token label) : ASTNode(label) {}
 
@@ -68,3 +102,5 @@ void AST::deleteLastNode()
     auto lastNode = this->getLastNode()->getParentPtr();
     if (lastNode) { this->getChildrenPtr()->pop_back(); }
 }
+
+/*-----------------------------------------PRECEDENCY CONTROL-----------------------------------------*/

@@ -4,22 +4,27 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 #include "Token.h"
 
 /*-base-*/ class ASTNode; 
 
-typedef std::string                 string;
-typedef const std::string &         ConstStrRef;
-typedef std::pair<string, string>   StrPair;
-typedef const StrPair               ConstStrPairRef;
-typedef std::vector<string>         StrV;
-typedef const StrV &                ConstStrVRef;
-typedef std::vector<ASTNode *>      NodeV;
+typedef std::string                  string;
+typedef const std::string &          ConstStrRef;
+typedef std::pair<string, string>    StrPair;
+typedef const StrPair                ConstStrPairRef;
+typedef std::vector<string>          StrV;
+typedef const StrV &                 ConstStrVRef;
+typedef std::vector<ASTNode *>       NodeV;
+typedef std::map<string, int>  PriorityMap;
 
 /*----------------------------------------------BASE--------------------------------------------------*/
 
 class ASTNode 
 {
+        friend bool isEqualWith(ASTNode &, ConstStrRef);
+        friend void swap(ASTNode *, ASTNode *);
+
         ASTNode *parentPtr;
         Token    label;
         NodeV    children;
@@ -27,6 +32,7 @@ class ASTNode
         NodeV *getChildrenPtr();
     public:
         ASTNode();
+        ASTNode(ASTNode *);
         ASTNode(Token, ASTNode *parentPtr=nullptr);
      /*-virtual-*/ ~ASTNode();
 
@@ -39,7 +45,10 @@ class ASTNode
 
         void addChild(ASTNode *);
 
+                ASTNode * getFirstChild();
+                ASTNode * getLastChild();
         virtual ASTNode * getLastNode();
+        void deleteFirstChild();
         void deleteLastChild();
 
         void showTree();
@@ -52,6 +61,21 @@ class AST : public ASTNode
         ASTNode * getLastNode();
         void deleteLastNode();
 };
+
+const static PriorityMap PRIORITY_MAP = {{"*", 0}, {"\\", 0}, {"%", 0}, {"+", 1}, {"-", 1}, {">", 2}, 
+                                         {"<", 2}, {">=", 2}, {"<=", 2}, {"==", 2}, {"=", 3}}; 
+
+static int curPriority;
+
+static void initPriority() { curPriority = 0; }
+
+static void setCurPriority(string op) { curPriority = PRIORITY_MAP.at(op); }
+
+static void setCurPriority(int predency) { curPriority = predency; }
+
+static int getCurPriority() { return curPriority; }
+
+static int getPredency(string op) { return PRIORITY_MAP.at(op); }
 
 /*-----------------------------------------LITERALS, OPERATIONS---------------------------------------*/
 /*

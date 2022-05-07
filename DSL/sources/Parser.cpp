@@ -43,6 +43,8 @@ void Parser::expr()
     ASTNode *expr = new ASTNode({"expr", "", curLineNum}, &tree);
     this->tree.addChild(expr);
 
+    initPriority();
+
     const FuncV expressions = 
     {
         {"functionDef", &Parser::functionDef}, {"functionCall", &Parser::functionCall},
@@ -92,31 +94,35 @@ void Parser::generateFailure(ASTNode *) { throw ParsingException(std::string("fa
 
 void Parser::functionDef(ASTNode *parentPtr)
 {
-    ASTNode * functionDef = new ASTNode({"functionDef", "", curLineNum}, parentPtr);
-    parentPtr->addChild(functionDef);
+    ASTNode * def = new ASTNode(parentPtr);
+    parentPtr->addChild(def);
+    this->keyword("def", def);
 
-    unsigned int fixedLineNum = this->curLineNum;
+    ASTNode * function = new ASTNode(def);
+    def->addChild(function);
+    this->function(function);
 
-    this->keyword("def", functionDef);
-    this->function(functionDef);
-    this->lBracket(functionDef);
+    this->lBracket();
 
-    try { this->variable(functionDef); }
+    ASTNode * argument = new ASTNode(def);
+    try { this->variable(argument); def->addChild(argument); }
     catch (ParsingException & e) 
     { 
-        this->rBracket(functionDef);
-        this->block(functionDef);
+        this->rBracket();
+        this->block(function);
         return;
     }
     while ((*listIt)->type != "EOF")
     {
-        try { this->argsSeparator(functionDef); }
+        try { this->argsSeparator(); }
         catch (ParsingException &e) { break; }
-        this->variable(functionDef);
+        argument = new ASTNode(def);
+        def->addChild(argument);
+        this->variable(argument);
     }
     
-    this->rBracket(functionDef);
-    this->block(functionDef);
+    this->rBracket();
+    this->block(function);
 }
 
 // functionCall -> function{1}lBracket{1}(value{1}(argsSeparator{1}
@@ -124,29 +130,33 @@ void Parser::functionDef(ASTNode *parentPtr)
 
 void Parser::functionCall(ASTNode *parentPtr)
 {
-    ASTNode * functionCall = new ASTNode({"functionCall", "", curLineNum}, parentPtr);
-    parentPtr->addChild(functionCall);
+    ASTNode * callee = new ASTNode({"callee", "", curLineNum}, parentPtr);
+    parentPtr->addChild(callee);
 
-    this->function(functionCall);
-    this->lBracket(functionCall);
+    ASTNode * function = new ASTNode(callee);
+    callee->addChild(function);
+    this->function(function);
 
-    try { this->value(functionCall); }
+    this->lBracket();
+
+    ASTNode * argument = new ASTNode(callee);
+    try { this->value(argument); callee->addChild(argument); }
     catch (ParsingException &e) 
     { 
-        this->rBracket(functionCall);
+        this->rBracket();
         return;
     }
     while ((*listIt)->type != "EOF")
     {
-        try { this->argsSeparator(functionCall); }
+        try { this->argsSeparator(); }
         catch (ParsingException &e) { break; }
-        try { this->arithmeticExpression(functionCall); }
-        catch (ParsingException &e) { this->conditionalExpression(functionCall);}
+        try { this->arithmeticExpression(callee); }
+        catch (ParsingException &e) { this->conditionalExpression(callee);}
     }
 
-    this->rBracket(functionCall);
+    this->rBracket();
 
-    try { this->separator(functionCall); }
+    try { this->separator(); }
     catch (ParsingException &e){}
 }
 
@@ -159,7 +169,9 @@ void Parser::block(ASTNode *parentPtr)
     ASTNode * block = new ASTNode({"block", "", curLineNum}, parentPtr);
     parentPtr->addChild(block);
 
-    this->lBrace(block);
+    initPriority();
+
+    this->lBrace();
 
     const FuncV blockExpressions
     {
@@ -195,7 +207,7 @@ void Parser::block(ASTNode *parentPtr)
                 }
             }
         }
-        catch (ParsingException & e) { this->rBrace(block); break; }
+        catch (ParsingException & e) { this->rBrace(); break; }
     }
 }
 
@@ -203,16 +215,18 @@ void Parser::block(ASTNode *parentPtr)
 
 void Parser::assignment(ASTNode *parentPtr)
 {
-    ASTNode * assignment = new ASTNode({"assignment", "", curLineNum}, parentPtr);
-    parentPtr->addChild(assignment);
+    ASTNode * assignOp = new ASTNode(parentPtr);
+    parentPtr->addChild(assignOp);
 
-    this->variable(assignment);
+    ASTNode * variable = new ASTNode(assignOp);
+    assignOp->addChild(variable);
+    this->variable(variable);
 
-    this->assignOp(assignment);
+    this->assignOp(assignOp);
 
     VecIt fixedIt = listIt;
-    try { this->arithmeticExpression(assignment); this->endLine(assignment); }
-    catch (ParsingException & e) { listIt = fixedIt; this->conditionalExpression(assignment); }
+    try { this->arithmeticExpression(assignOp); this->endLine(); }
+    catch (ParsingException & e) { listIt = fixedIt; this->conditionalExpression(assignOp); }
 }
 
 // allocation -> new{1}constructor{1}lBracket{1}(value{1}(argsSeparator{1}
@@ -220,32 +234,34 @@ void Parser::assignment(ASTNode *parentPtr)
 
 void Parser::allocation(ASTNode *parentPtr)
 {
-    ASTNode * allocation = new ASTNode({"allocation", "", curLineNum}, parentPtr);
-    parentPtr->addChild(allocation);
+    ASTNode * new_ = new ASTNode(parentPtr);
+    parentPtr->addChild(new_);
+    this->keyword("new", new_);
 
-    this->keyword("new", allocation);
+    ASTNode * constructor = new ASTNode(new_);
+    new_->addChild(constructor);
+    this->constructor(constructor);
 
-    this->constructor(allocation);
+    this->lBracket();
 
-    this->lBracket(allocation);
-
-    try { this->value(allocation); }
+    ASTNode * argument = new ASTNode(new_);
+    try { this->value(argument); new_->addChild(argument); }
     catch (ParsingException &e) 
     { 
-        this->rBracket(allocation);
+        this->rBracket();
         return;
     }
     while ((*listIt)->type != "EOF")
     {
-        try { this->argsSeparator(allocation); }
+        try { this->argsSeparator(); }
         catch (ParsingException &e) { break; }
-        try { this->arithmeticExpression(allocation); }
-        catch (ParsingException &e) { this->conditionalExpression(allocation);}
+        try { this->arithmeticExpression(new_); }
+        catch (ParsingException &e) { this->conditionalExpression(new_);}
     }
 
-    this->rBracket(allocation);
+    this->rBracket();
 
-    try { this->separator(allocation); }
+    try { this->separator(); }
     catch (ParsingException &e){}
 
 }
@@ -255,43 +271,78 @@ void Parser::allocation(ASTNode *parentPtr)
 
 void Parser::arithmeticExpression(ASTNode *parentPtr)
 {
-    ASTNode * arithmeticExpression = new ASTNode({"arithmeticExpression", "", curLineNum}, parentPtr);
-    parentPtr->addChild(arithmeticExpression);
+    // (5) '-' 4 '*' 2
+    ASTNode * valuePtr1 = nullptr, * valuePtr2 = nullptr, * opPtr = nullptr;
+
+    setCurPriority(parentPtr->getLabel().value);
 
     do 
     {
         try
         {
-            try { this->lBracket(arithmeticExpression); }
+            try { this->lBracket(); }
             catch (ParsingException & e) { break; }
-            this->arithmeticExpression(arithmeticExpression);
-            this->rBracket(arithmeticExpression);
-            try { this->mathOp(arithmeticExpression); }
+
+            this->arithmeticExpression(parentPtr);
+
+            this->rBracket();
+
+            try 
+            { 
+                this->mathOp(parentPtr);
+            }
             catch (ParsingException & e) { return; }
         }
         catch (ParsingException & e) { throw e; }
     } while (false);
 
-    this->notEndLine(arithmeticExpression);
-    try { this->unaryOp(arithmeticExpression); }
-    catch(ParsingException & e){}
-    try { this->value(arithmeticExpression); }
+    //if (opPtr) { parentPtr = opPtr; }
+
+    opPtr = new ASTNode(/*parentPtr*/);
+    //parentPtr->addChild(opPtr);
+
+    valuePtr2 = new ASTNode({"value", "", curLineNum});
+
+    this->notEndLine();
+    try { this->unaryOp(); }
+    catch(ParsingException & e) {}
+    try { this->value(valuePtr2); }
     catch (ParsingException &e) 
     { 
-        try { this->functionCall(arithmeticExpression); }
-        catch (ParsingException &e) { this->allocation(arithmeticExpression); } 
+        try { this->functionCall(valuePtr2); }
+        catch (ParsingException &e) { this->allocation(valuePtr2); } 
     }
-    try { this->unaryOp(arithmeticExpression); }
+    try { this->unaryOp(); }
     catch(ParsingException & e){}
 
-    try { this->mathOp(arithmeticExpression); }
+    try 
+    { 
+        this->mathOp(opPtr);
+
+        if (getPredency(opPtr->getLabel().value) > curPriority) 
+        { 
+            swap(parentPtr, opPtr); 
+            valuePtr2->setParentPtr(parentPtr);
+            parentPtr->addChild(valuePtr2);
+        }
+        else 
+        { 
+            parentPtr->addChild(opPtr); opPtr->setParentPtr(parentPtr); 
+            valuePtr2->setParentPtr(opPtr);
+            opPtr->addChild(valuePtr2);
+        } 
+
+        setCurPriority(opPtr->getLabel().value);
+    }
     catch (ParsingException & e)
     {
-        try { this->separator(arithmeticExpression); }
+        valuePtr2->setParentPtr(parentPtr);
+        parentPtr->addChild(valuePtr2);
+        try { this->separator(); }
         catch (ParsingException & e){}
         return;
     }
-    this->arithmeticExpression(arithmeticExpression);
+    this->arithmeticExpression(opPtr);
 }
 
 // conditionalExpression -> ( lBracket{1}(conditionalExpression{1}rBracket{1}(comprOp{1}|logicalOp))?
@@ -303,17 +354,18 @@ void Parser::conditionalExpression(ASTNode *parentPtr)
     ASTNode * conditionalExpression = new ASTNode({"conditionalExpression", "", curLineNum}, parentPtr);
     parentPtr->addChild(conditionalExpression);
 
-    try { this->logicalNegation(conditionalExpression); }
+    //ASTNode * probablylogNeg = new ASTNode(conditionalExpression);
+    try { this->logicalNegation(); }
     catch (ParsingException & e){}
 
     do 
     {
         try
         {
-            try { this->lBracket(conditionalExpression); }
+            try { this->lBracket(); }
             catch (ParsingException & e) { break; }
             this->conditionalExpression(conditionalExpression);
-            this->rBracket(conditionalExpression);
+            this->rBracket();
             try { this->comprOp(conditionalExpression); break; }
             catch (ParsingException & e) {}
             try { this->logicalOp(conditionalExpression); }
@@ -322,7 +374,7 @@ void Parser::conditionalExpression(ASTNode *parentPtr)
         catch (ParsingException & e) { throw e; }
     } while (false);
 
-    this->notEndLine(conditionalExpression);
+    this->notEndLine();
     this->arithmeticExpression(conditionalExpression);
 
     do
@@ -332,7 +384,7 @@ void Parser::conditionalExpression(ASTNode *parentPtr)
         try { this->logicalOp(conditionalExpression); }
         catch (ParsingException & e)
         {
-            try { this->separator(conditionalExpression); }
+            try { this->separator(); }
             catch (ParsingException & e){}
             return;
         }
@@ -351,7 +403,7 @@ void Parser::opReturn(ASTNode *parentPtr)
     this->keyword("return", opReturn);
 
     VecIt fixedIt = listIt;
-    try { this->arithmeticExpression(opReturn); this->endLine(opReturn); }
+    try { this->arithmeticExpression(opReturn); this->endLine(); }
     catch (ParsingException & e) { listIt = fixedIt; this->conditionalExpression(opReturn); }
 }
 
@@ -364,7 +416,7 @@ void Parser::opBreak(ASTNode *parentPtr)
 
     this->keyword("break", opBreak);
 
-    try { this->separator(opBreak); }
+    try { this->separator(); }
     catch (ParsingException &e){}
 }
 
@@ -377,7 +429,7 @@ void Parser::opContinue(ASTNode *parentPtr)
 
     this->keyword("continue", opContinue);
 
-    try { this->separator(opContinue); }
+    try { this->separator(); }
     catch (ParsingException &e){}
 }
 
@@ -389,9 +441,9 @@ void Parser::opIf(ASTNode *parentPtr)
     parentPtr->addChild(opIf);
 
     this->keyword("if", opIf);
-    this->lBracket(opIf);
+    this->lBracket();
     this->conditionalExpression(opIf);
-    this->rBracket(opIf);
+    this->rBracket();
     this->block(opIf);
 
     try { this->opElif(opIf); }
@@ -409,9 +461,9 @@ void Parser::opElif(ASTNode *parentPtr)
     parentPtr->addChild(opElif);
 
     this->keyword("elif",opElif);
-    this->lBracket(opElif);
+    this->lBracket();
     this->conditionalExpression(opElif);
-    this->rBracket(opElif);
+    this->rBracket();
     this->block(opElif);
 
     try { this->opElif(opElif); }
@@ -442,10 +494,10 @@ void Parser::opDoWhile(ASTNode *parentPtr)
     this->keyword("do", opDoWhile);
     this->block(opDoWhile);
     this->keyword("while", opDoWhile);
-    this->lBracket(opDoWhile);
+    this->lBracket();
     this->conditionalExpression(opDoWhile);
-    this->rBracket(opDoWhile);
-    try { this->separator(opDoWhile); }
+    this->rBracket();
+    try { this->separator(); }
     catch(ParsingException & e){}
 }
 
@@ -457,42 +509,42 @@ void Parser::opWhile(ASTNode *parentPtr)
     parentPtr->addChild(opWhile);
 
     this->keyword("while", opWhile);
-    this->lBracket(opWhile);
+    this->lBracket();
     this->conditionalExpression(opWhile);
-    this->rBracket(opWhile);
+    this->rBracket();
     this->block(opWhile);
 }
 
 /*-------------------------------------------------ATHOMS---------------------------------------------*/
 
-void Parser::keyword(string concrete, ASTNode *parentPtr)
+void Parser::keyword(string concrete, ASTNode *ptr)
 {
     if (std::strcmp((*listIt)->value.c_str(), concrete.c_str()) != 0) 
     {
         throw ParsingException(generateException(concrete, (*listIt)->type)); 
     }
-    else { listIt++; }
+    else {  ptr->setLabel(**listIt); listIt++; }
 }
 
-void Parser::constructor(ASTNode *parentPtr)
+void Parser::constructor(ASTNode *ptr)
 {
     if ((*listIt)->type != "CONSTRUCTOR")
     {
         throw ParsingException(generateException(string("constructor"), (*listIt)->type));
     }
-    else { listIt++; }
+    else { ptr->setLabel(**listIt); listIt++; }
 }
 
-void Parser::function(ASTNode *parentPtr)
+void Parser::function(ASTNode *ptr)
 {
     if ((*listIt)->type != "FUNCTION")
     {
         throw ParsingException(generateException(string("function"), (*listIt)->type));
     }
-    else { listIt++; }
+    else { ptr->setLabel(**listIt); listIt++; }
 }
 
-void Parser::lBracket(ASTNode *parentPtr)
+void Parser::lBracket()
 {
     if ((*listIt)->type != "L_BRACKET")
     {
@@ -501,16 +553,16 @@ void Parser::lBracket(ASTNode *parentPtr)
     else { listIt++; }   
 }
 
-void Parser::variable(ASTNode *parentPtr)
+void Parser::variable(ASTNode *ptr)
 {
     if ((*listIt)->type != "VARIABLE")
     {
         throw ParsingException(generateException(std::string("variable"), (*listIt)->type));
     }
-    else { listIt++; }   
+    else { ptr->setLabel(**listIt); listIt++; }   
 }
 
-void Parser::argsSeparator(ASTNode *parentPtr)
+void Parser::argsSeparator()
 {
     if ((*listIt)->type != "ARG_SEPARATOR")
     {
@@ -519,7 +571,7 @@ void Parser::argsSeparator(ASTNode *parentPtr)
     else { listIt++; }   
 }
 
-void Parser::rBracket(ASTNode *parentPtr)
+void Parser::rBracket()
 {
     if ((*listIt)->type != "R_BRACKET")
     {
@@ -528,7 +580,7 @@ void Parser::rBracket(ASTNode *parentPtr)
     else { listIt++; }   
 }
 
-void Parser::lBrace(ASTNode *parentPtr)
+void Parser::lBrace()
 {
     if ((*listIt)->type != "L_BRACE")
     {
@@ -537,7 +589,7 @@ void Parser::lBrace(ASTNode *parentPtr)
     else { listIt++; }   
 }
 
-void Parser::rBrace(ASTNode *parentPtr)
+void Parser::rBrace()
 {
     if ((*listIt)->type != "R_BRACE")
     {
@@ -546,16 +598,16 @@ void Parser::rBrace(ASTNode *parentPtr)
     else { listIt++; }   
 }
 
-void Parser::assignOp(ASTNode *parentPtr)
+void Parser::assignOp(ASTNode *ptr)
 {
     if ((*listIt)->type != "ASSIGN_OPERATOR")
     {
         throw ParsingException(generateException(std::string("'='"), (*listIt)->type));
     }
-    else { listIt++; }   
+    else { ptr->setLabel(**listIt); listIt++; }   
 }
 
-void Parser::unaryOp(ASTNode *parentPtr)
+void Parser::unaryOp(/*-ASTNode *ptr-*/)
 {
     if ((*listIt)->type != "UNARY_OPERATOR")
     {
@@ -564,7 +616,7 @@ void Parser::unaryOp(ASTNode *parentPtr)
     else { listIt++; }   
 }
 
-void Parser::logicalNegation(ASTNode *parentPtr)
+void Parser::logicalNegation(/*-ASTNode *ptr-*/)
 {
     if ((*listIt)->type != "LOGICAL_NEGATION")
     {
@@ -573,27 +625,27 @@ void Parser::logicalNegation(ASTNode *parentPtr)
     else { listIt++; }   
 }
 
-void Parser::value(ASTNode *parentPtr)
+void Parser::value(ASTNode *ptr)
 {
     if ((*listIt)->type != "INTEGER" and (*listIt)->type != "STRING" and
-             (*listIt)->type != "VARIABLE" and (*listIt)->type != "FLOAT" and
-             (*listIt)->type != "CONSTANT_KW")
+        (*listIt)->type != "VARIABLE" and (*listIt)->type != "FLOAT" and
+        (*listIt)->type != "CONSTANT_KW")
     {
         throw ParsingException(generateException(std::string("value"), (*listIt)->type));
     }
-    else { listIt++; }   
+    else { ptr->setLabel(**listIt); listIt++; }
 }
 
-void Parser::mathOp(ASTNode *parentPtr)
+void Parser::mathOp(ASTNode *ptr)
 {
     if ((*listIt)->type != "MATH_OPERATOR")
     {
         throw ParsingException(generateException(std::string("math. operator"), (*listIt)->type));
     }
-    else { listIt++; }   
+    else { ptr->setLabel(**listIt); listIt++; }
 }
 
-void Parser::separator(ASTNode *parentPtr)
+void Parser::separator()
 {
     if ((*listIt)->type != "SEPARATOR")
     {
@@ -602,26 +654,26 @@ void Parser::separator(ASTNode *parentPtr)
     else { listIt++; }   
 }
 
-void Parser::comprOp(ASTNode *parentPtr)
+void Parser::comprOp(ASTNode *ptr)
 {
     if ((*listIt)->type != "COMPRASION_OPERATOR")
     {
         throw ParsingException(generateException(std::string("compr. operator"), (*listIt)->type));
     }
-    else { listIt++; }   
+    else { ptr->setLabel(**listIt); listIt++; }   
 }
 
-void Parser::logicalOp(ASTNode *parentPtr)
+void Parser::logicalOp(ASTNode *ptr)
 {
     if ((*listIt)->value != "and" and (*listIt)->value != "or" and
         (*listIt)->value != "nand" and (*listIt)->value != "nor")
     {
         throw ParsingException(generateException(std::string("logical operator"), (*listIt)->type));
     }
-    else { listIt++; }   
+    else { ptr->setLabel(**listIt); listIt++; }   
 }
 
-void Parser::endLine(ASTNode *parentPtr)
+void Parser::endLine()
 {
     listIt--;
     int prevTokenLine  = (*listIt)->line;
@@ -636,7 +688,7 @@ void Parser::endLine(ASTNode *parentPtr)
     }
 }
 
-void Parser::notEndLine(ASTNode *parentPtr)
+void Parser::notEndLine()
 {
     listIt--;
     int prevTokenLine = (*listIt)->line;
