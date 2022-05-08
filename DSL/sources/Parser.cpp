@@ -287,16 +287,35 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
 
             this->rBracket();
 
+            setCurPriority(-1);
+
             try 
             { 
-                this->mathOp(parentPtr);
+                opPtr = new ASTNode();
+                this->mathOp(opPtr);
+
+                valuePtr1 = parentPtr->getLastChild();
+                parentPtr->deleteLastChild();
+
+                valuePtr1->setParentPtr(opPtr);
+                opPtr->addChild(valuePtr1);
+
+                opPtr->setParentPtr(parentPtr);
+                parentPtr->addChild(opPtr);
+
+                setCurPriority(opPtr->getLabel().value);
             }
-            catch (ParsingException & e) { return; }
+            catch (ParsingException & e) 
+            {
+                delete opPtr;
+
+                return; 
+            }
         }
         catch (ParsingException & e) { throw e; }
     } while (false);
 
-    //if (opPtr) { parentPtr = opPtr; }
+    if (opPtr) { parentPtr = opPtr; }
 
     opPtr = new ASTNode(/*parentPtr*/);
     //parentPtr->addChild(opPtr);
@@ -310,7 +329,11 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
     catch (ParsingException &e) 
     { 
         try { this->functionCall(valuePtr2); }
-        catch (ParsingException &e) { this->allocation(valuePtr2); } 
+        catch (ParsingException &e) 
+        { 
+            try {this->allocation(valuePtr2); }
+            catch (ParsingException &e){ delete valuePtr2; throw e; } 
+        } 
     }
     try { this->unaryOp(); }
     catch(ParsingException & e){}
@@ -336,6 +359,8 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
     }
     catch (ParsingException & e)
     {
+        delete opPtr;
+
         valuePtr2->setParentPtr(parentPtr);
         parentPtr->addChild(valuePtr2);
         try { this->separator(); }
