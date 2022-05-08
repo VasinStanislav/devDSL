@@ -45,14 +45,16 @@ class Parser
         // trying to parse something
         void expr();
 
-        // expressions:
+        // non-terminals:
         void functionDef(ASTNode *);
         void functionCall(ASTNode *);
         void args(ASTNode *);
         void block(ASTNode *);
         void assignment(ASTNode *);
         void allocation(ASTNode *);
+        void prefix(ASTNode **);
         void arithmeticExpression(ASTNode *);
+        void postfix(ASTNode **, ASTNode **);
         void conditionalExpression(ASTNode *);
         void opReturn(ASTNode *);
         void opBreak(ASTNode *);
@@ -63,7 +65,9 @@ class Parser
         void opDoWhile(ASTNode *);
         void opWhile(ASTNode *);
 
-        // athoms:
+        void addValue(ASTNode **, ASTNode **, ASTNode **, ASTNode **);
+
+        // terminals:
         void keyword(string, ASTNode *);
         void constructor(ASTNode *);
         void function(ASTNode *);
@@ -74,7 +78,7 @@ class Parser
         void lBrace();
         void rBrace();
         void assignOp(ASTNode *);
-        void unaryOp(/*-ASTNode *ptr-*/);
+        void unaryOp(ASTNode *);
         void logicalNegation(/*-ASTNode *ptr-*/);
         void value(ASTNode *);
         void mathOp(ASTNode *);

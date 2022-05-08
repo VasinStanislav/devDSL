@@ -16,7 +16,7 @@ typedef const StrPair                ConstStrPairRef;
 typedef std::vector<string>          StrV;
 typedef const StrV &                 ConstStrVRef;
 typedef std::vector<ASTNode *>       NodeV;
-typedef std::map<string, int>  PriorityMap;
+typedef std::map<string, int>        PriorityMap;
 
 /*----------------------------------------------BASE--------------------------------------------------*/
 

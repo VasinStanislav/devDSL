@@ -266,13 +266,72 @@ void Parser::allocation(ASTNode *parentPtr)
 
 }
 
+void Parser::prefix(ASTNode **prefix)
+{
+    try 
+    { 
+        *prefix = new ASTNode();
+        this->unaryOp(*prefix);
+    }
+    catch(ParsingException & e) { delete (*prefix); *prefix = nullptr; }
+}
+
+void Parser::postfix(ASTNode **postfix, ASTNode **prefix)
+{
+    try 
+    { 
+        *postfix = new ASTNode();
+        this->unaryOp(*postfix);
+
+        if (*prefix) 
+        { 
+            (*postfix)->setParentPtr(*prefix);
+            (*prefix)->addChild(*postfix);
+        }
+    }
+    catch(ParsingException & e) { delete (*postfix); *postfix = nullptr; }
+}
+
+void Parser::addValue(ASTNode **parentPtr, ASTNode **postfix, ASTNode **prefix, ASTNode **valuePtr)
+{
+    if (*prefix) 
+    { 
+        (*prefix)->setParentPtr(*parentPtr);
+        (*parentPtr)->addChild(*prefix);
+
+        if (*postfix)
+        {
+            (*valuePtr)->setParentPtr(*postfix);
+            (*postfix)->addChild(*valuePtr);
+        }
+        else 
+        {
+            (*valuePtr)->setParentPtr(*prefix);
+            (*prefix)->addChild(*valuePtr);
+        }
+    }
+    else if (*postfix) 
+    { 
+        (*postfix)->setParentPtr(*parentPtr);
+        (*parentPtr)->addChild(*postfix);
+        (*valuePtr)->setParentPtr(*postfix);
+        (*postfix)->addChild(*valuePtr);
+    }
+    else 
+    { 
+        (*valuePtr)->setParentPtr(*parentPtr);
+        (*parentPtr)->addChild(*valuePtr); 
+    }
+}
+
 // arithmeticExpression -> ( (lBracket{1}arithmeticExpression{1}rBracket{1}mathOp{1})?notEndLine{1}
-// unaryOP?value{1}unaryOp?((mathOp{1}arithmeticExpression{1})|(separator?)){1}
+// prefix?value{1}postfix?((mathOp{1}arithmeticExpression{1})|(separator?)){1}
 
 void Parser::arithmeticExpression(ASTNode *parentPtr)
 {
     // (5) '-' 4 '*' 2
     ASTNode * valuePtr1 = nullptr, * valuePtr2 = nullptr, * opPtr = nullptr;
+    ASTNode * prefix = nullptr, * postfix = nullptr;
 
     setCurPriority(parentPtr->getLabel().value);
 
@@ -280,12 +339,28 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
     {
         try
         {
+            this->prefix(&prefix);
+
             try { this->lBracket(); }
-            catch (ParsingException & e) { break; }
+            catch (ParsingException & e) 
+            { 
+                if (prefix) 
+                {
+                    delete prefix;
+                    listIt--;
+                }
+                break; 
+            }
 
             this->arithmeticExpression(parentPtr);
+            valuePtr1 = parentPtr->getLastChild();
+            parentPtr->deleteLastChild();
 
             this->rBracket();
+
+            this->postfix(&postfix, &prefix);
+
+            this->addValue(&parentPtr, &postfix, &prefix, &valuePtr1);
 
             setCurPriority(-1);
 
@@ -315,16 +390,17 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
         catch (ParsingException & e) { throw e; }
     } while (false);
 
+    prefix  = nullptr;
+    postfix = nullptr;
+
     if (opPtr) { parentPtr = opPtr; }
 
-    opPtr = new ASTNode(/*parentPtr*/);
-    //parentPtr->addChild(opPtr);
+    opPtr = new ASTNode();
 
     valuePtr2 = new ASTNode({"value", "", curLineNum});
 
     this->notEndLine();
-    try { this->unaryOp(); }
-    catch(ParsingException & e) {}
+    this->prefix(&prefix);
     try { this->value(valuePtr2); }
     catch (ParsingException &e) 
     { 
@@ -335,8 +411,7 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
             catch (ParsingException &e){ delete valuePtr2; throw e; } 
         } 
     }
-    try { this->unaryOp(); }
-    catch(ParsingException & e){}
+    this->postfix(&postfix, &prefix);
 
     try 
     { 
@@ -345,14 +420,13 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
         if (getPredency(opPtr->getLabel().value) > curPriority) 
         { 
             swap(parentPtr, opPtr); 
-            valuePtr2->setParentPtr(parentPtr);
-            parentPtr->addChild(valuePtr2);
+            this->addValue(&parentPtr, &postfix, &prefix, &valuePtr2);
         }
         else 
         { 
-            parentPtr->addChild(opPtr); opPtr->setParentPtr(parentPtr); 
-            valuePtr2->setParentPtr(opPtr);
-            opPtr->addChild(valuePtr2);
+            parentPtr->addChild(opPtr); 
+            opPtr->setParentPtr(parentPtr); 
+            this->addValue(&opPtr, &postfix, &prefix, &valuePtr2);
         } 
 
         setCurPriority(opPtr->getLabel().value);
@@ -360,9 +434,7 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
     catch (ParsingException & e)
     {
         delete opPtr;
-
-        valuePtr2->setParentPtr(parentPtr);
-        parentPtr->addChild(valuePtr2);
+        this->addValue(&parentPtr, &postfix, &prefix, &valuePtr2);
         try { this->separator(); }
         catch (ParsingException & e){}
         return;
@@ -376,10 +448,6 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
 
 void Parser::conditionalExpression(ASTNode *parentPtr)
 {
-    ASTNode * conditionalExpression = new ASTNode({"conditionalExpression", "", curLineNum}, parentPtr);
-    parentPtr->addChild(conditionalExpression);
-
-    //ASTNode * probablylogNeg = new ASTNode(conditionalExpression);
     try { this->logicalNegation(); }
     catch (ParsingException & e){}
 
@@ -389,24 +457,24 @@ void Parser::conditionalExpression(ASTNode *parentPtr)
         {
             try { this->lBracket(); }
             catch (ParsingException & e) { break; }
-            this->conditionalExpression(conditionalExpression);
+            this->conditionalExpression(parentPtr);
             this->rBracket();
-            try { this->comprOp(conditionalExpression); break; }
+            try { this->comprOp(parentPtr); break; }
             catch (ParsingException & e) {}
-            try { this->logicalOp(conditionalExpression); }
+            try { this->logicalOp(parentPtr); }
             catch (ParsingException & e) { return; }
         }
         catch (ParsingException & e) { throw e; }
     } while (false);
 
     this->notEndLine();
-    this->arithmeticExpression(conditionalExpression);
+    this->arithmeticExpression(parentPtr);
 
     do
     {
-        try { this->comprOp(conditionalExpression); break; }
+        try { this->comprOp(parentPtr); break; }
         catch (ParsingException & e){}
-        try { this->logicalOp(conditionalExpression); }
+        try { this->logicalOp(parentPtr); }
         catch (ParsingException & e)
         {
             try { this->separator(); }
@@ -415,7 +483,7 @@ void Parser::conditionalExpression(ASTNode *parentPtr)
         }
     } while (false);
 
-    this->conditionalExpression(conditionalExpression);
+    this->conditionalExpression(parentPtr);
 }
 
 // opReturn -> (return){1}(arithmeticExpression{1}|conditionalExpression{1}|allocation{1})?separator?
@@ -632,13 +700,13 @@ void Parser::assignOp(ASTNode *ptr)
     else { ptr->setLabel(**listIt); listIt++; }   
 }
 
-void Parser::unaryOp(/*-ASTNode *ptr-*/)
+void Parser::unaryOp(ASTNode *ptr)
 {
     if ((*listIt)->type != "UNARY_OPERATOR")
     {
         throw ParsingException(generateException(std::string("unary operator"), (*listIt)->type));
     }
-    else { listIt++; }   
+    else { ptr->setLabel(**listIt); listIt++; }
 }
 
 void Parser::logicalNegation(/*-ASTNode *ptr-*/)

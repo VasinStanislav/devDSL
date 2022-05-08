@@ -12,7 +12,7 @@ Lexer::Lexer()
     lexems.fill("LOGICAL_NEGATION",    (regex)(R"(^(!)$)"));
     lexems.fill("MATH_OPERATOR",       (regex)(R"(^[%+*\-\\]$)"));
     lexems.fill("ASSIGN_OPERATOR",     (regex)(R"(^(=)$)"));
-    lexems.fill("COMPRASION_OPERATOR", (regex)(R"(^[<>]|(>=)|(<=)|(==)$)"));
+    lexems.fill("COMPRASION_OPERATOR", (regex)(R"(^[<>]|(>=)|(<=)|(==)|(!=)$)"));
     lexems.fill("L_BRACKET",           (regex)(R"(^\($)"));
     lexems.fill("R_BRACKET",           (regex)(R"(^\)$)"));
     lexems.fill("L_BRACE",             (regex)(R"(^\{$)"));
