@@ -54,6 +54,8 @@ class ASTNode
         void showTree();
 };
 
+/*----------------------------------------ABSTRACT SYNTAX TREE----------------------------------------*/
+
 class AST : public ASTNode
 {
     public:
@@ -62,20 +64,19 @@ class AST : public ASTNode
         void deleteLastNode();
 };
 
-const static PriorityMap PRIORITY_MAP = {{"*", 0}, {"\\", 0}, {"%", 0}, {"+", 1}, {"-", 1}, {">", 2}, 
-                                         {"<", 2}, {">=", 2}, {"<=", 2}, {"==", 2}, {"=", 3}}; 
+/*------------------------------------------PREDENCY CONTROL------------------------------------------*/
 
-static int curPriority;
-
-static void initPriority() { curPriority = 0; }
-
-static void setCurPriority(string op) { curPriority = PRIORITY_MAP.at(op); }
-
-static void setCurPriority(int predency) { curPriority = predency; }
-
-static int getCurPriority() { return curPriority; }
-
-static int getPredency(string op) { return PRIORITY_MAP.at(op); }
+class PredencyControl
+{
+        const static PriorityMap PRIORITY_MAP;
+        static int curPriority;
+    public:
+        static void initPriority();
+        static void setCurPriority(string);
+        static void setCurPriority(int);
+        static int  getCurPriority();
+        static int  getPredency(string);
+};
 
 /*-----------------------------------------LITERALS, OPERATIONS---------------------------------------*/
 /*

@@ -43,7 +43,7 @@ void Parser::expr()
     ASTNode *expr = new ASTNode({"expr", "", curLineNum}, &tree);
     this->tree.addChild(expr);
 
-    initPriority();
+    PredencyControl::initPriority();
 
     const FuncV expressions = 
     {
@@ -139,19 +139,24 @@ void Parser::functionCall(ASTNode *parentPtr)
 
     this->lBracket();
 
-    ASTNode * argument = new ASTNode(callee);
-    try { this->value(argument); callee->addChild(argument); }
+    try { this->arithmeticExpression(callee); }
     catch (ParsingException &e) 
-    { 
-        this->rBracket();
-        return;
+    {
+        callee->deleteLastChild();
+        try { this->conditionalExpression(callee); }
+        catch (ParsingException &e) 
+        { 
+            callee->deleteLastChild(); 
+            this->rBracket();
+            return;
+        }
     }
     while ((*listIt)->type != "EOF")
     {
         try { this->argsSeparator(); }
         catch (ParsingException &e) { break; }
         try { this->arithmeticExpression(callee); }
-        catch (ParsingException &e) { this->conditionalExpression(callee);}
+        catch (ParsingException &e) { callee->deleteLastChild(); this->conditionalExpression(callee); }
     }
 
     this->rBracket();
@@ -169,7 +174,7 @@ void Parser::block(ASTNode *parentPtr)
     ASTNode * block = new ASTNode({"block", "", curLineNum}, parentPtr);
     parentPtr->addChild(block);
 
-    initPriority();
+    PredencyControl::initPriority();
 
     this->lBrace();
 
@@ -244,19 +249,24 @@ void Parser::allocation(ASTNode *parentPtr)
 
     this->lBracket();
 
-    ASTNode * argument = new ASTNode(new_);
-    try { this->value(argument); new_->addChild(argument); }
+     try { this->arithmeticExpression(new_); }
     catch (ParsingException &e) 
-    { 
-        this->rBracket();
-        return;
+    {
+        new_->deleteLastChild();
+        try { this->conditionalExpression(new_); }
+        catch (ParsingException &e) 
+        { 
+            new_->deleteLastChild(); 
+            this->rBracket();
+            return;
+        }
     }
     while ((*listIt)->type != "EOF")
     {
         try { this->argsSeparator(); }
         catch (ParsingException &e) { break; }
         try { this->arithmeticExpression(new_); }
-        catch (ParsingException &e) { this->conditionalExpression(new_);}
+        catch (ParsingException &e) { new_->deleteLastChild(); this->conditionalExpression(new_); }
     }
 
     this->rBracket();
@@ -290,6 +300,45 @@ void Parser::postfix(ASTNode **postfix, ASTNode **prefix)
         }
     }
     catch(ParsingException & e) { delete (*postfix); *postfix = nullptr; }
+}
+
+void Parser::setOperator(ASTNode **parentPtr, ASTNode **opPtr, ASTNode **valuePtr)
+{
+    *valuePtr = (*parentPtr)->getLastChild();
+    (*parentPtr)->deleteLastChild();
+
+    (*valuePtr)->setParentPtr(*opPtr);
+    (*opPtr)->addChild(*valuePtr);
+
+    (*opPtr)->setParentPtr(*parentPtr);
+    (*parentPtr)->addChild(*opPtr);
+
+    PredencyControl::setCurPriority((*opPtr)->getLabel().value);
+}
+
+void Parser::defineParent(ASTNode **parentPtr)
+{
+    if ((*parentPtr)->getLabel().value == "value")
+    {
+        
+    }
+}
+
+void Parser::addValue(ASTNode **parentPtr, ASTNode **logicalNegation, ASTNode **valuePtr)
+{
+    if (*logicalNegation)
+    {
+        (*logicalNegation)->setParentPtr(*parentPtr);
+        (*parentPtr)->addChild(*logicalNegation);
+
+        (*valuePtr)->setParentPtr(*logicalNegation);
+        (*logicalNegation)->addChild(*valuePtr);
+    }
+    else 
+    {
+        (*valuePtr)->setParentPtr(*parentPtr);
+        (*parentPtr)->addChild(*valuePtr); 
+    }
 }
 
 void Parser::addValue(ASTNode **parentPtr, ASTNode **postfix, ASTNode **prefix, ASTNode **valuePtr)
@@ -333,7 +382,7 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
     ASTNode * valuePtr1 = nullptr, * valuePtr2 = nullptr, * opPtr = nullptr;
     ASTNode * prefix = nullptr, * postfix = nullptr;
 
-    setCurPriority(parentPtr->getLabel().value);
+    PredencyControl::setCurPriority(parentPtr->getLabel().value);
 
     do 
     {
@@ -362,30 +411,15 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
 
             this->addValue(&parentPtr, &postfix, &prefix, &valuePtr1);
 
-            setCurPriority(-1);
+            PredencyControl::setCurPriority(-1);
 
             try 
             { 
                 opPtr = new ASTNode();
                 this->mathOp(opPtr);
-
-                valuePtr1 = parentPtr->getLastChild();
-                parentPtr->deleteLastChild();
-
-                valuePtr1->setParentPtr(opPtr);
-                opPtr->addChild(valuePtr1);
-
-                opPtr->setParentPtr(parentPtr);
-                parentPtr->addChild(opPtr);
-
-                setCurPriority(opPtr->getLabel().value);
+                this->setOperator(&parentPtr, &opPtr, &valuePtr1); 
             }
-            catch (ParsingException & e) 
-            {
-                delete opPtr;
-
-                return; 
-            }
+            catch (ParsingException & e) { delete opPtr; return; }
         }
         catch (ParsingException & e) { throw e; }
     } while (false);
@@ -417,7 +451,7 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
     { 
         this->mathOp(opPtr);
 
-        if (getPredency(opPtr->getLabel().value) > curPriority) 
+        if (PredencyControl::getPredency(opPtr->getLabel().value) > PredencyControl::getCurPriority()) 
         { 
             swap(parentPtr, opPtr); 
             this->addValue(&parentPtr, &postfix, &prefix, &valuePtr2);
@@ -429,7 +463,7 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
             this->addValue(&opPtr, &postfix, &prefix, &valuePtr2);
         } 
 
-        setCurPriority(opPtr->getLabel().value);
+        PredencyControl::setCurPriority(opPtr->getLabel().value);
     }
     catch (ParsingException & e)
     {
@@ -448,42 +482,133 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
 
 void Parser::conditionalExpression(ASTNode *parentPtr)
 {
-    try { this->logicalNegation(); }
-    catch (ParsingException & e){}
+    // (5) > 4 and 2 < 3
+    ASTNode * valuePtr1 = nullptr, * valuePtr2 = nullptr, * opPtr = nullptr;
+    ASTNode * logicalNegation = nullptr;
+
+    PredencyControl::setCurPriority(parentPtr->getLabel().value);
 
     do 
     {
         try
         {
+            try { logicalNegation = new ASTNode(); this->logicalNegation(logicalNegation); }
+            catch (ParsingException & e) { delete logicalNegation; logicalNegation = nullptr; }
             try { this->lBracket(); }
-            catch (ParsingException & e) { break; }
+            catch (ParsingException & e) 
+            { 
+                if (logicalNegation) 
+                {
+                    delete logicalNegation;
+                    listIt--;
+                }
+                break; 
+            }
+
             this->conditionalExpression(parentPtr);
+            valuePtr1 = parentPtr->getLastChild();
+
+            if (logicalNegation)
+            {
+                parentPtr->deleteLastChild();
+
+                logicalNegation->setParentPtr(parentPtr);
+                parentPtr->addChild(logicalNegation);
+
+                valuePtr1->setParentPtr(logicalNegation);
+                logicalNegation->addChild(valuePtr1);
+            }
+
             this->rBracket();
-            try { this->comprOp(parentPtr); break; }
-            catch (ParsingException & e) {}
-            try { this->logicalOp(parentPtr); }
-            catch (ParsingException & e) { return; }
+
+            PredencyControl::setCurPriority(-1);
+
+            try 
+            { 
+                opPtr = new ASTNode();
+                this->comprOp(opPtr); 
+                this->setOperator(&parentPtr, &opPtr, &valuePtr1);
+
+                break; 
+            }
+            catch (ParsingException & e) { delete opPtr; }
+            try 
+            {
+                opPtr = new ASTNode();
+                this->logicalOp(opPtr);
+                this->setOperator(&parentPtr, &opPtr, &valuePtr1); 
+            }
+            catch (ParsingException & e) { delete opPtr; return; }
         }
         catch (ParsingException & e) { throw e; }
     } while (false);
 
+    if (opPtr) { parentPtr = opPtr; }
+
+    opPtr = new ASTNode();
+
+    valuePtr2 = new ASTNode({"value", "", curLineNum});
+
     this->notEndLine();
-    this->arithmeticExpression(parentPtr);
+    try { logicalNegation = new ASTNode(); this->logicalNegation(logicalNegation); }
+    catch (ParsingException & e) { delete logicalNegation; logicalNegation = nullptr; }
+    this->value(valuePtr2);
 
     do
     {
-        try { this->comprOp(parentPtr); break; }
+        try 
+        { 
+            this->comprOp(opPtr); 
+            
+            if (PredencyControl::getPredency(opPtr->getLabel().value) >
+                PredencyControl::getCurPriority()) 
+            {
+                swap(parentPtr, opPtr);
+                this->addValue(&parentPtr, &logicalNegation, &valuePtr2);
+            }
+            else
+            { 
+                parentPtr->addChild(opPtr); 
+                opPtr->setParentPtr(parentPtr); 
+                this->addValue(&opPtr, &logicalNegation, &valuePtr2);
+            } 
+
+            PredencyControl::setCurPriority(opPtr->getLabel().value);
+
+            break; 
+        }
         catch (ParsingException & e){}
-        try { this->logicalOp(parentPtr); }
+        try 
+        { 
+            this->logicalOp(opPtr); 
+            
+            if (PredencyControl::getPredency(opPtr->getLabel().value) >
+                PredencyControl::getCurPriority()) 
+            {
+                swap(parentPtr, opPtr);
+                this->addValue(&parentPtr, &logicalNegation, &valuePtr2);
+            }
+            else
+            { 
+                parentPtr->addChild(opPtr); 
+                opPtr->setParentPtr(parentPtr); 
+                this->addValue(&opPtr, &logicalNegation, &valuePtr2);
+            } 
+
+            PredencyControl::setCurPriority(opPtr->getLabel().value);
+
+        }
         catch (ParsingException & e)
         {
+            delete opPtr;
+            this->addValue(&parentPtr, &logicalNegation, &valuePtr2);
             try { this->separator(); }
             catch (ParsingException & e){}
             return;
         }
     } while (false);
 
-    this->conditionalExpression(parentPtr);
+    this->conditionalExpression(opPtr);
 }
 
 // opReturn -> (return){1}(arithmeticExpression{1}|conditionalExpression{1}|allocation{1})?separator?
@@ -709,13 +834,13 @@ void Parser::unaryOp(ASTNode *ptr)
     else { ptr->setLabel(**listIt); listIt++; }
 }
 
-void Parser::logicalNegation(/*-ASTNode *ptr-*/)
+void Parser::logicalNegation(ASTNode *ptr)
 {
     if ((*listIt)->type != "LOGICAL_NEGATION")
     {
         throw ParsingException(generateException(std::string("'!'"), (*listIt)->type));
     }
-    else { listIt++; }   
+    else { ptr->setLabel(**listIt); listIt++; }
 }
 
 void Parser::value(ASTNode *ptr)

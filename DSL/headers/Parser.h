@@ -65,7 +65,10 @@ class Parser
         void opDoWhile(ASTNode *);
         void opWhile(ASTNode *);
 
+        void setOperator(ASTNode **, ASTNode **, ASTNode **);
+        void addValue(ASTNode **, ASTNode **, ASTNode **);
         void addValue(ASTNode **, ASTNode **, ASTNode **, ASTNode **);
+        void defineParent(ASTNode **);
 
         // terminals:
         void keyword(string, ASTNode *);
@@ -79,7 +82,7 @@ class Parser
         void rBrace();
         void assignOp(ASTNode *);
         void unaryOp(ASTNode *);
-        void logicalNegation(/*-ASTNode *ptr-*/);
+        void logicalNegation(ASTNode *);
         void value(ASTNode *);
         void mathOp(ASTNode *);
         void separator();

@@ -23,7 +23,7 @@ Lexer::Lexer()
 
     keyWords.fill("DEFINITION_KW",     (regex)(R"(^(def)$)"));
     keyWords.fill("ALLOCATION_KW",     (regex)(R"(^(new)$)"));
-    keyWords.fill("LOGICAL_KW",        (regex)(R"(^(and|or|nand|nor)$)"));
+    keyWords.fill("LOGICAL_KW",        (regex)(R"(^(and|or)$)"));
     keyWords.fill("CONSTANT_KW",       (regex)(R"(^(true|false)$)"));
     keyWords.fill("IF_KW",             (regex)(R"(^(if)$)"));
     keyWords.fill("ELSE_KW",           (regex)(R"(^(else)$)"));
