@@ -65,6 +65,8 @@ class Parser
         void opDoWhile(ASTNode *);
         void opWhile(ASTNode *);
 
+        int arithmeticBrackets(ASTNode **, ASTNode **, ASTNode **, ASTNode **);
+        int conditionalBrackets(ASTNode **, ASTNode **, ASTNode **);
         void setOperator(ASTNode **, ASTNode **, ASTNode **);
         void addValue(ASTNode **, ASTNode **, ASTNode **);
         void addValue(ASTNode **, ASTNode **, ASTNode **, ASTNode **);

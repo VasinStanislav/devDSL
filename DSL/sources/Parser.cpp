@@ -251,7 +251,7 @@ void Parser::assignment(ASTNode *parentPtr)
     try { this->arithmeticExpression(assignOp); this->endLine(); }
     catch (ParsingException & e) 
     { 
-        assignOp->deleteLastChild(); 
+        if (assignOp->getChildrenAmount()>1) { assignOp->deleteLastChild(); }
         listIt = fixedIt; 
         this->conditionalExpression(assignOp); 
     }
@@ -398,6 +398,37 @@ void Parser::addValue(ASTNode **parentPtr, ASTNode **postfix, ASTNode **prefix, 
     }
 }
 
+int Parser::arithmeticBrackets(ASTNode **parentPtr, ASTNode **postfix, ASTNode **prefix, 
+                                ASTNode **valuePtr)
+{
+    this->prefix(prefix);
+
+    try { this->lBracket(); }
+    catch (ParsingException & e) 
+    { 
+        if (*prefix) 
+        {
+            delete (*prefix);
+            listIt--;
+        }
+        return 0; 
+    }
+
+    this->arithmeticExpression(*parentPtr);
+    *valuePtr = (*parentPtr)->getLastChild();
+    (*parentPtr)->deleteLastChild();
+
+    this->rBracket();
+
+    this->postfix(postfix, prefix);
+
+    this->addValue(parentPtr, postfix, prefix, valuePtr);
+
+    PredencyControl::setCurPriority(-1);
+
+    return 1;
+}
+
 // arithmeticExpression -> ( (lBracket{1}arithmeticExpression{1}rBracket{1}mathOp{1})?notEndLine{1}
 // prefix?value{1}postfix?((mathOp{1}arithmeticExpression{1})|(separator?)){1}
 
@@ -406,6 +437,7 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
     // (5) '-' 4 '*' 2
     ASTNode * valuePtr1 = nullptr, * valuePtr2 = nullptr, * opPtr = nullptr;
     ASTNode * prefix = nullptr, * postfix = nullptr;
+    int brackets;
 
     PredencyControl::setCurPriority(parentPtr->getLabel().value);
 
@@ -413,30 +445,9 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
     {
         try
         {
-            this->prefix(&prefix);
+            brackets = this->arithmeticBrackets(&parentPtr, &postfix, &prefix, &valuePtr1);
 
-            try { this->lBracket(); }
-            catch (ParsingException & e) 
-            { 
-                if (prefix) 
-                {
-                    delete prefix;
-                    listIt--;
-                }
-                break; 
-            }
-
-            this->arithmeticExpression(parentPtr);
-            valuePtr1 = parentPtr->getLastChild();
-            parentPtr->deleteLastChild();
-
-            this->rBracket();
-
-            this->postfix(&postfix, &prefix);
-
-            this->addValue(&parentPtr, &postfix, &prefix, &valuePtr1);
-
-            PredencyControl::setCurPriority(-1);
+            if (!brackets) { break; }
 
             try 
             { 
@@ -449,8 +460,9 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
         catch (ParsingException & e) { throw e; }
     } while (false);
 
-    prefix  = nullptr;
-    postfix = nullptr;
+    prefix   = nullptr;
+    postfix  = nullptr;
+    brackets = 0;
 
     if (opPtr) { parentPtr = opPtr; }
 
@@ -459,21 +471,43 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
     valuePtr2 = new ASTNode({"value", "", curLineNum});
 
     this->notEndLine();
-    this->prefix(&prefix);
-    VecIt fixedIt = listIt;
-    try { this->value(valuePtr2); }
-    catch (ParsingException &e) 
-    { 
-        try { this->functionCall(valuePtr2); }
+
+    do
+    {
+        try 
+        { 
+            brackets = this->arithmeticBrackets(&valuePtr2, &postfix, &prefix, &valuePtr1); 
+            if (brackets) 
+            { 
+                valuePtr1 = valuePtr2->getLastChild();
+                valuePtr2->deleteLastChild();
+
+                valuePtr1->setParentPtr(nullptr);
+                delete valuePtr2;
+
+                valuePtr2 = valuePtr1;
+
+                break; 
+            }
+        }
+        catch (ParsingException & e){}
+
+        this->prefix(&prefix);
+        VecIt fixedIt = listIt;
+        try { this->value(valuePtr2); }
         catch (ParsingException &e) 
         { 
-            listIt = fixedIt;
-            valuePtr2->deleteLastChild();
-            try {this->allocation(valuePtr2); }
-            catch (ParsingException &e){ delete valuePtr2; throw e; } 
-        } 
-    }
-    this->postfix(&postfix, &prefix);
+            try { this->functionCall(valuePtr2); }
+            catch (ParsingException &e) 
+            { 
+                listIt = fixedIt;
+                valuePtr2->deleteLastChild();
+                try {this->allocation(valuePtr2); }
+                catch (ParsingException &e){ delete valuePtr2; throw e; } 
+            } 
+        }
+        this->postfix(&postfix, &prefix);
+    } while (false);
 
     try 
     { 
@@ -504,6 +538,42 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
     this->arithmeticExpression(opPtr);
 }
 
+int Parser::conditionalBrackets(ASTNode **parentPtr, ASTNode **logicalNegation, ASTNode **valuePtr)
+{
+    try { *logicalNegation = new ASTNode(); this->logicalNegation(*logicalNegation); }
+    catch (ParsingException & e) { delete (*logicalNegation); (*logicalNegation) = nullptr; }
+    try { this->lBracket(); }
+    catch (ParsingException & e) 
+    { 
+        if (*logicalNegation) 
+        {
+            delete (*logicalNegation);
+            listIt--;
+        }
+        return 0; 
+    }
+
+    this->conditionalExpression(*parentPtr);
+    *valuePtr = (*parentPtr)->getLastChild();
+
+    if (*logicalNegation)
+    {
+        (*parentPtr)->deleteLastChild();
+
+        (*logicalNegation)->setParentPtr(*parentPtr);
+        (*parentPtr)->addChild(*logicalNegation);
+
+        (*valuePtr)->setParentPtr(*logicalNegation);
+        (*logicalNegation)->addChild(*valuePtr);
+    }
+
+    this->rBracket();
+
+    PredencyControl::setCurPriority(-1);
+
+    return 1;
+}
+
 // conditionalExpression -> ( lBracket{1}(conditionalExpression{1}rBracket{1}(comprOp{1}|logicalOp))?
 // notEndLine{1}arithmeticExpression{1}(((comprOp{1}|logicalOp{1})conditionalExpression{1})|
 // (separator?)){1}
@@ -513,6 +583,7 @@ void Parser::conditionalExpression(ASTNode *parentPtr)
     // (5) > 4 and 2 < 3
     ASTNode * valuePtr1 = nullptr, * valuePtr2 = nullptr, * opPtr = nullptr;
     ASTNode * logicalNegation = nullptr;
+    int brackets;
 
     PredencyControl::setCurPriority(parentPtr->getLabel().value);
 
@@ -520,36 +591,8 @@ void Parser::conditionalExpression(ASTNode *parentPtr)
     {
         try
         {
-            try { logicalNegation = new ASTNode(); this->logicalNegation(logicalNegation); }
-            catch (ParsingException & e) { delete logicalNegation; logicalNegation = nullptr; }
-            try { this->lBracket(); }
-            catch (ParsingException & e) 
-            { 
-                if (logicalNegation) 
-                {
-                    delete logicalNegation;
-                    listIt--;
-                }
-                break; 
-            }
-
-            this->conditionalExpression(parentPtr);
-            valuePtr1 = parentPtr->getLastChild();
-
-            if (logicalNegation)
-            {
-                parentPtr->deleteLastChild();
-
-                logicalNegation->setParentPtr(parentPtr);
-                parentPtr->addChild(logicalNegation);
-
-                valuePtr1->setParentPtr(logicalNegation);
-                logicalNegation->addChild(valuePtr1);
-            }
-
-            this->rBracket();
-
-            PredencyControl::setCurPriority(-1);
+            brackets = this->conditionalBrackets(&parentPtr, &logicalNegation, &valuePtr1);
+            if (!brackets) { break; }
 
             try 
             { 
@@ -559,10 +602,9 @@ void Parser::conditionalExpression(ASTNode *parentPtr)
 
                 break; 
             }
-            catch (ParsingException & e) { delete opPtr; }
+            catch (ParsingException & e){}
             try 
             {
-                opPtr = new ASTNode();
                 this->logicalOp(opPtr);
                 this->setOperator(&parentPtr, &opPtr, &valuePtr1); 
             }
@@ -573,14 +615,49 @@ void Parser::conditionalExpression(ASTNode *parentPtr)
 
     if (opPtr) { parentPtr = opPtr; }
 
+
     opPtr = new ASTNode();
 
     valuePtr2 = new ASTNode({"value", "", curLineNum});
 
     this->notEndLine();
-    try { logicalNegation = new ASTNode(); this->logicalNegation(logicalNegation); }
-    catch (ParsingException & e) { delete logicalNegation; logicalNegation = nullptr; }
-    this->value(valuePtr2);
+
+    do
+    {
+        try 
+        { 
+            brackets = this->conditionalBrackets(&valuePtr2, &logicalNegation, &valuePtr1);
+            if (brackets) 
+            { 
+                valuePtr1 = valuePtr2->getLastChild();
+                valuePtr2->deleteLastChild();
+
+                valuePtr1->setParentPtr(nullptr);
+                delete valuePtr2;
+
+                valuePtr2 = valuePtr1;
+
+                break; 
+            }
+        }
+        catch (ParsingException & e){}
+
+        try { logicalNegation = new ASTNode(); this->logicalNegation(logicalNegation); }
+        catch (ParsingException & e) { delete logicalNegation; logicalNegation = nullptr; }
+        VecIt fixedIt = listIt;
+        try { this->value(valuePtr2); }
+        catch (ParsingException &e) 
+        { 
+            try { this->functionCall(valuePtr2); }
+            catch (ParsingException &e) 
+            { 
+                listIt = fixedIt;
+                valuePtr2->deleteLastChild();
+                try {this->allocation(valuePtr2); }
+                catch (ParsingException &e){ delete valuePtr2; throw e; } 
+            } 
+        }
+    } while (false);
 
     do
     {

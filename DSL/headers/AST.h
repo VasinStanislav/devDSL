@@ -43,6 +43,8 @@ class ASTNode
         void setLabel(ConstStrRef, ConstStrRef, unsigned int);
         Token getLabel();
 
+        size_t getChildrenAmount();
+
         void addChild(ASTNode *);
 
                 ASTNode * getFirstChild();

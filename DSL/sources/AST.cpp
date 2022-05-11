@@ -51,6 +51,8 @@ void ASTNode::deleteLastChild()
     this->children.pop_back();
 }
 
+size_t ASTNode::getChildrenAmount() { return children.size(); }
+
 NodeV * ASTNode::getChildrenPtr() { return &children; }
 
 ASTNode * ASTNode::getLastNode()

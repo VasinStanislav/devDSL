@@ -18,7 +18,7 @@ def main_programm(argc, argv) {
     var_1_1 = 3;    var_1_2 = 4
     var_1_1_1 = 5;  var_1_1_2 = 6
 
-    var = (((var_1_1_1 + var_1_1_2) * var_1_1 - var_1_2) + var_2) \ var_1
+    number = (5 < 1) or (4 > 2)
 
     return var
 }
