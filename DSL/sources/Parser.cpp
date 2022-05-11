@@ -125,13 +125,28 @@ void Parser::functionDef(ASTNode *parentPtr)
     this->block(function);
 }
 
+void Parser::defineParent(ASTNode **parentPtr, ASTNode **victimPtr)
+{
+    if ((*parentPtr)->getLabel().value=="value" or (*parentPtr)->getLabel().value=="callee")
+    {
+        (*parentPtr)->setLabel((*victimPtr)->getLabel());
+        delete (*victimPtr);
+        *victimPtr = *parentPtr;
+    }
+    else 
+    {
+        (*victimPtr)->setParentPtr(*parentPtr);
+        (*parentPtr)->addChild(*victimPtr);
+    }
+}
+
 // functionCall -> function{1}lBracket{1}(value{1}(argsSeparator{1}
 // (arithmeticExpression{1}|conditionalExpression{1}))*)?rBracket{1}separator?
 
 void Parser::functionCall(ASTNode *parentPtr)
 {
-    ASTNode * callee = new ASTNode({"callee", "", curLineNum}, parentPtr);
-    parentPtr->addChild(callee);
+    ASTNode * callee = new ASTNode({"callee", "", curLineNum});
+    this->defineParent(&parentPtr, &callee);
 
     ASTNode * function = new ASTNode(callee);
     callee->addChild(function);
@@ -139,13 +154,16 @@ void Parser::functionCall(ASTNode *parentPtr)
 
     this->lBracket();
 
+    VecIt fixedIt = listIt;
     try { this->arithmeticExpression(callee); }
     catch (ParsingException &e) 
     {
+        listIt = fixedIt;
         callee->deleteLastChild();
         try { this->conditionalExpression(callee); }
         catch (ParsingException &e) 
         { 
+            listIt = fixedIt;
             callee->deleteLastChild(); 
             this->rBracket();
             return;
@@ -231,7 +249,12 @@ void Parser::assignment(ASTNode *parentPtr)
 
     VecIt fixedIt = listIt;
     try { this->arithmeticExpression(assignOp); this->endLine(); }
-    catch (ParsingException & e) { listIt = fixedIt; this->conditionalExpression(assignOp); }
+    catch (ParsingException & e) 
+    { 
+        assignOp->deleteLastChild(); 
+        listIt = fixedIt; 
+        this->conditionalExpression(assignOp); 
+    }
 }
 
 // allocation -> new{1}constructor{1}lBracket{1}(value{1}(argsSeparator{1}
@@ -239,9 +262,9 @@ void Parser::assignment(ASTNode *parentPtr)
 
 void Parser::allocation(ASTNode *parentPtr)
 {
-    ASTNode * new_ = new ASTNode(parentPtr);
-    parentPtr->addChild(new_);
+    ASTNode * new_ = new ASTNode();
     this->keyword("new", new_);
+    this->defineParent(&parentPtr, &new_);
 
     ASTNode * constructor = new ASTNode(new_);
     new_->addChild(constructor);
@@ -249,24 +272,34 @@ void Parser::allocation(ASTNode *parentPtr)
 
     this->lBracket();
 
-     try { this->arithmeticExpression(new_); }
+    VecIt fixedIt = listIt;
+    try { this->arithmeticExpression(new_); }
     catch (ParsingException &e) 
     {
+        listIt = fixedIt;
         new_->deleteLastChild();
         try { this->conditionalExpression(new_); }
         catch (ParsingException &e) 
         { 
+            listIt = fixedIt;
             new_->deleteLastChild(); 
             this->rBracket();
             return;
         }
     }
+    fixedIt = listIt;
     while ((*listIt)->type != "EOF")
     {
         try { this->argsSeparator(); }
         catch (ParsingException &e) { break; }
         try { this->arithmeticExpression(new_); }
-        catch (ParsingException &e) { new_->deleteLastChild(); this->conditionalExpression(new_); }
+        catch (ParsingException &e) 
+        { 
+            listIt = listIt; 
+            new_->deleteLastChild(); 
+            this->conditionalExpression(new_); 
+        }
+        fixedIt = listIt;
     }
 
     this->rBracket();
@@ -314,14 +347,6 @@ void Parser::setOperator(ASTNode **parentPtr, ASTNode **opPtr, ASTNode **valuePt
     (*parentPtr)->addChild(*opPtr);
 
     PredencyControl::setCurPriority((*opPtr)->getLabel().value);
-}
-
-void Parser::defineParent(ASTNode **parentPtr)
-{
-    if ((*parentPtr)->getLabel().value == "value")
-    {
-        
-    }
 }
 
 void Parser::addValue(ASTNode **parentPtr, ASTNode **logicalNegation, ASTNode **valuePtr)
@@ -435,12 +460,15 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
 
     this->notEndLine();
     this->prefix(&prefix);
+    VecIt fixedIt = listIt;
     try { this->value(valuePtr2); }
     catch (ParsingException &e) 
     { 
         try { this->functionCall(valuePtr2); }
         catch (ParsingException &e) 
         { 
+            listIt = fixedIt;
+            valuePtr2->deleteLastChild();
             try {this->allocation(valuePtr2); }
             catch (ParsingException &e){ delete valuePtr2; throw e; } 
         } 
@@ -664,11 +692,12 @@ void Parser::opIf(ASTNode *parentPtr)
     this->rBracket();
     this->block(opIf);
 
+    VecIt fixedIt = listIt;
     try { this->opElif(opIf); }
-    catch (ParsingException & e){}
+    catch (ParsingException & e) { opIf->deleteLastChild(); listIt = fixedIt; }
 
     try { this->opElse(opIf); }
-    catch (ParsingException & e){}
+    catch (ParsingException & e) { opIf->deleteLastChild(); listIt = fixedIt; }
 }
 
 // opElif -> (elif){1}lBracket{1}conditionalExpression{1}rBracket{1}block{1}opElif?opElse?
@@ -684,11 +713,13 @@ void Parser::opElif(ASTNode *parentPtr)
     this->rBracket();
     this->block(opElif);
 
+    VecIt fixedIt = listIt;
     try { this->opElif(opElif); }
-    catch (ParsingException & e){}
+    catch (ParsingException & e) { opElif->deleteLastChild(); listIt = fixedIt; }
 
+    fixedIt = listIt;
     try { this->opElse(opElif); }
-    catch (ParsingException & e){}
+    catch (ParsingException & e) { opElif->deleteLastChild(); listIt = fixedIt; }
 }
 
 // opElse -> (else){1}block{1}

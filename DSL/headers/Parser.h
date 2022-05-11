@@ -68,7 +68,7 @@ class Parser
         void setOperator(ASTNode **, ASTNode **, ASTNode **);
         void addValue(ASTNode **, ASTNode **, ASTNode **);
         void addValue(ASTNode **, ASTNode **, ASTNode **, ASTNode **);
-        void defineParent(ASTNode **);
+        void defineParent(ASTNode **, ASTNode **);
 
         // terminals:
         void keyword(string, ASTNode *);

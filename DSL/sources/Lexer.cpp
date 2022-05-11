@@ -146,7 +146,7 @@ V * Lexer::tokenize(std::ifstream *input)
                 {
                     if (type != "")
                     {
-                        if (type == "FUNCTION")
+                        if (type == "FUNCTION" or type == "CONSTRUCTOR")
                         {
                             string curStrWithoutBrackets = lines.first.substr(0, 
                                                                             lines.first.length() - 2);
