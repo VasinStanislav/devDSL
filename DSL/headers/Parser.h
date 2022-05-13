@@ -36,7 +36,7 @@ class Parser
         const unsigned int lines;
         V tokenList;
         VecIt listIt;
-        AST tree;
+        AST * tree;
 
         // exceptions processing
         string generateException(string, string);
@@ -62,6 +62,7 @@ class Parser
         void opIf(ASTNode *);
         void opElif(ASTNode *);
         void opElse(ASTNode *);
+        void opFor(ASTNode *);
         void opDoWhile(ASTNode *);
         void opWhile(ASTNode *);
 
@@ -97,6 +98,7 @@ class Parser
         ~Parser();
 
         int lang();
+        AST * getTree();
 };
 
 #endif

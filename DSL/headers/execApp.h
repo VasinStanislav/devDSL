@@ -11,7 +11,7 @@
 int execApp();
 
 V* analyze(std::ifstream *);
-int parse(V *);
+AST * parse(V *);
 
 
 #endif

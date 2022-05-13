@@ -9,10 +9,12 @@ int execApp()
 
     V list      = *analyze(&in);
 
-    bool parsed = list.empty() ? false : parse(&list) == 0;
+    AST * tree = list.empty() ? nullptr : parse(&list);
 
     std::cout<<std::setw(29)<<std::setfill('*')<<std::right<<"";
     std::cout<<std::setw(28)<<std::left<<""<<std::setfill(' ')<<"\n";
+
+    delete tree;
 
     return 0;
 }
@@ -44,9 +46,28 @@ V * analyze(std::ifstream *input)
     return tokenList;
 }
 
-int parse(V *tokenList)
+AST * parse(V *tokenList)
 {
+    std::cout<<std::setw(29)<<std::setfill('*')<<std::right<<"Par";
+    std::cout<<std::setw(28)<<std::left<<"ser"<<"\n";
+
     Parser parser(tokenList);
     int res = parser.lang();
-    return res;
+
+    AST * root = nullptr;
+    if (res==0) 
+    { 
+        root = parser.getTree(); 
+    }
+    else       
+    { 
+        return root; 
+    }
+
+    std::cout<<std::setw(29)<<std::setfill('*')<<std::right<<"AS";
+    std::cout<<std::setw(28)<<std::left<<"T"<<"\n";
+    
+    root->showTree();
+
+    return root;
 }

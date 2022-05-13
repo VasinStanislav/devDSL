@@ -1,7 +1,7 @@
 #include "../headers/Parser.h"
 
 Parser::Parser(V *tokenList) : tokenList(*tokenList), listIt(this->tokenList.begin()),
-    curLineNum(1), lines((tokenList->back())->line), tree({"lang", "", curLineNum}){}
+    curLineNum(1), lines((tokenList->back())->line), tree(new AST({"lang", "", curLineNum})){}
 
 Parser::~Parser()
 {
@@ -9,13 +9,12 @@ Parser::~Parser()
     tokenList.clear();
 }
 
+AST * Parser::getTree() { return tree; }
+
 // lang -> (expr)*
 
 int Parser::lang()
 {   
-    std::cout<<std::setw(29)<<std::setfill('*')<<std::right<<"Par";
-    std::cout<<std::setw(28)<<std::left<<"ser"<<"\n";
-
     std::cout<<"in lang!\n";
 
     try 
@@ -24,15 +23,13 @@ int Parser::lang()
     }
     catch (ParsingException &e) 
     { 
-        this->tree.deleteLastChild();
+        //this->tree->deleteLastChild();
+        delete tree;
+        tree = nullptr;
         return 1; 
     }
     std::cout<<"parsed successfully!\n";
 
-    std::cout<<std::setw(29)<<std::setfill('*')<<std::right<<"AS";
-    std::cout<<std::setw(28)<<std::left<<"T"<<"\n";
-    
-    this->tree.showTree();
     return 0;
 }
 
@@ -40,8 +37,8 @@ int Parser::lang()
  
 void Parser::expr()
 {
-    ASTNode *expr = new ASTNode({"expr", "", curLineNum}, &tree);
-    this->tree.addChild(expr);
+    ASTNode *expr = new ASTNode({"expr", "", curLineNum}, tree);
+    this->tree->addChild(expr);
 
     PredencyControl::initPriority();
 
@@ -49,8 +46,8 @@ void Parser::expr()
     {
         {"functionDef", &Parser::functionDef}, {"functionCall", &Parser::functionCall},
         {"assignment", &Parser::assignment}, {"opIf", &Parser::opIf},
-        {"opWhile", &Parser::opWhile}, {"opDoWhile", &Parser::opDoWhile},
-        {"failure", &Parser::generateFailure}
+        {"opFor", &Parser::opFor}, {"opWhile", &Parser::opWhile}, 
+        {"opDoWhile", &Parser::opDoWhile}, {"failure", &Parser::generateFailure}
     };
 
     VecIt fixedIt = listIt;
@@ -201,8 +198,9 @@ void Parser::block(ASTNode *parentPtr)
         {"functionDef", &Parser::functionDef}, {"functionCall", &Parser::functionCall},
         {"assignment", &Parser::assignment}, {"opIf", &Parser::opIf},
         {"opReturn", &Parser::opReturn}, {"opWhile", &Parser::opWhile},
-        {"opDoWhile", &Parser::opDoWhile}, {"opBreak", &Parser::opBreak}, 
-        {"opContinue", &Parser::opContinue}, {"failure", &Parser::generateFailure}
+        {"opDoWhile", &Parser::opDoWhile}, {"opFor", &Parser::opFor},
+        {"opBreak", &Parser::opBreak}, {"opContinue", &Parser::opContinue}, 
+        {"failure", &Parser::generateFailure}
     };
     VecIt fixedIt = listIt;    
 
@@ -234,7 +232,7 @@ void Parser::block(ASTNode *parentPtr)
     }
 }
 
-// assignment -> variable{1}assignOp{1}(arithmeticExpression|conditionalExpression){1}
+// assignment -> variable{1}assignOp{1}(arithmeticExpression|conditionalExpression){1}separator?
 
 void Parser::assignment(ASTNode *parentPtr)
 {
@@ -248,13 +246,15 @@ void Parser::assignment(ASTNode *parentPtr)
     this->assignOp(assignOp);
 
     VecIt fixedIt = listIt;
-    try { this->arithmeticExpression(assignOp); this->endLine(); }
+    try { this->arithmeticExpression(assignOp); }
     catch (ParsingException & e) 
     { 
         if (assignOp->getChildrenAmount()>1) { assignOp->deleteLastChild(); }
         listIt = fixedIt; 
         this->conditionalExpression(assignOp); 
     }
+    try { this->separator(); }
+    catch (ParsingException & e){}
 }
 
 // allocation -> new{1}constructor{1}lBracket{1}(value{1}(argsSeparator{1}
@@ -531,8 +531,8 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
     {
         delete opPtr;
         this->addValue(&parentPtr, &postfix, &prefix, &valuePtr2);
-        try { this->separator(); }
-        catch (ParsingException & e){}
+        //try { this->separator(); }
+        //catch (ParsingException & e){}
         return;
     }
     this->arithmeticExpression(opPtr);
@@ -707,8 +707,8 @@ void Parser::conditionalExpression(ASTNode *parentPtr)
         {
             delete opPtr;
             this->addValue(&parentPtr, &logicalNegation, &valuePtr2);
-            try { this->separator(); }
-            catch (ParsingException & e){}
+            //try { this->separator(); }
+            //catch (ParsingException & e){}
             return;
         }
     } while (false);
@@ -839,6 +839,26 @@ void Parser::opWhile(ASTNode *parentPtr)
     this->conditionalExpression(opWhile);
     this->rBracket();
     this->block(opWhile);
+}
+
+// opFor -> (for){1}lBracket{1}assignment?separator{1}conditionalExpression?separator{1}
+// assignment?rBracket{1}block{1}
+
+void Parser::opFor(ASTNode *parentPtr)
+{
+    ASTNode * opFor = new ASTNode({"opFor", "", curLineNum}, parentPtr);
+    parentPtr->addChild(opFor);
+
+    this->keyword("for", opFor);
+    this->lBracket();
+
+    this->assignment(opFor);
+    this->conditionalExpression(opFor);
+    this->separator();
+    this->assignment(opFor);
+
+    this->rBracket();
+    this->block(opFor);
 }
 
 /*-------------------------------------------------ATHOMS---------------------------------------------*/
