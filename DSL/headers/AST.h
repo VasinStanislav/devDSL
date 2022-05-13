@@ -13,9 +13,11 @@ typedef std::string                  string;
 typedef const std::string &          ConstStrRef;
 typedef std::pair<string, string>    StrPair;
 typedef const StrPair                ConstStrPairRef;
-typedef std::vector<string>          StrV;
-typedef const StrV &                 ConstStrVRef;
-typedef std::vector<ASTNode *>       NodeV;
+typedef std::vector<string>          StringVector;
+typedef const StringVector &         ConstStringVectorRef;
+typedef std::vector<ASTNode *>       NodeVector;
+typedef NodeVector::iterator         NodeVecIt;
+typedef NodeVector::reverse_iterator NodeVecRevIt;
 typedef std::map<string, int>        PriorityMap;
 
 /*----------------------------------------------BASE--------------------------------------------------*/
@@ -25,11 +27,9 @@ class ASTNode
         friend bool isEqualWith(ASTNode &, ConstStrRef);
         friend void swap(ASTNode *, ASTNode *);
 
-        ASTNode *parentPtr;
-        Token    label;
-        NodeV    children;
-    protected:
-        NodeV *getChildrenPtr();
+        ASTNode    *parentPtr;
+        Token       label;
+        NodeVector  children;
     public:
         ASTNode();
         ASTNode(ASTNode *);
@@ -43,12 +43,13 @@ class ASTNode
         void setLabel(ConstStrRef, ConstStrRef, unsigned int);
         Token getLabel();
 
+        NodeVector *getChildrenPtr();
         size_t getChildrenAmount();
 
         void addChild(ASTNode *);
 
-                ASTNode * getFirstChild();
-                ASTNode * getLastChild();
+        ASTNode * getFirstChild();
+        ASTNode * getLastChild();
         virtual ASTNode * getLastNode();
         void deleteFirstChild();
         void deleteLastChild();
@@ -62,7 +63,7 @@ class AST : public ASTNode
 {
     public:
         AST(Token);
-        ASTNode * getLastNode();
+        ASTNode    * getLastNode();
         void deleteLastNode();
 };
 
