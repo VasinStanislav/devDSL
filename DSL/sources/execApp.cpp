@@ -15,7 +15,7 @@ int execApp()
     std::cout<<std::setw(28)<<std::left<<""<<std::setfill(' ')<<"\n";
 
     ASTNode * childPtr = tree->getLastChild()->getLastChild();
-    Vector * rpn =  getRPN(childPtr);
+    Stack * rpn =  getRPN(childPtr);
 
     delete rpn;
     delete tree;
@@ -76,14 +76,15 @@ AST * parse(V *tokenList)
     return root;
 }
 
-Vector * getRPN(ASTNode *node)
+Stack * getRPN(ASTNode *node)
 {
     StackMachine stackMachine;
-    Vector * rpn = stackMachine.toRPN(node);
+    Stack * rpn = stackMachine.toRPN(node);
 
-    for (const auto &el : *rpn)
+    while (!rpn->empty())
     {
-        std::cout<<el.value<<" ";
+        std::cout<<rpn->top().value<<" ";
+        rpn->pop();
     }
     std::cout<<"\n";
 

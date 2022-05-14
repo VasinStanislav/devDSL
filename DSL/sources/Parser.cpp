@@ -770,8 +770,11 @@ void Parser::opIf(ASTNode *parentPtr)
     this->block(opIf);
 
     VecIt fixedIt = listIt;
-    try { this->opElif(opIf); }
-    catch (ParsingException & e) { opIf->deleteLastChild(); listIt = fixedIt; }
+    while (true)
+    {
+        try { this->opElif(opIf); fixedIt = listIt; }
+        catch (ParsingException & e) { opIf->deleteLastChild(); listIt = fixedIt; break; }
+    }
 
     try { this->opElse(opIf); }
     catch (ParsingException & e) { opIf->deleteLastChild(); listIt = fixedIt; }
@@ -789,14 +792,6 @@ void Parser::opElif(ASTNode *parentPtr)
     this->conditionalExpression(opElif);
     this->rBracket();
     this->block(opElif);
-
-    VecIt fixedIt = listIt;
-    try { this->opElif(opElif); }
-    catch (ParsingException & e) { opElif->deleteLastChild(); listIt = fixedIt; }
-
-    fixedIt = listIt;
-    try { this->opElse(opElif); }
-    catch (ParsingException & e) { opElif->deleteLastChild(); listIt = fixedIt; }
 }
 
 // opElse -> (else){1}block{1}
