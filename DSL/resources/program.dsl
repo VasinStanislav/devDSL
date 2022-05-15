@@ -17,7 +17,7 @@
 #        print("1 is more than 0")
 #        break
 #    }
-#
+
 #    var_1 = 1;      var_2 = 2
 #    var_1_1 = 3;    var_1_2 = 4
 #    var_1_1_1 = 5;  var_1_1_2 = 6
@@ -26,9 +26,14 @@
 #
 #    return var
 # }
-#
+
 # line = ("abc" + "def")
-if   (x > 5){ str = x + " is more than 5" }
-elif (x > 3){ str = x + " at least is more than 3" }
-elif (x < 5){ str = x + " is less than 5" }
-else        { str = x + " is equal with 5" }
+# for (a = 1; a < 3; a = a++){
+#    x = x + a
+#    print(x + " ")
+# }
+# print(main_programm(argc, argv))
+
+while (x > 0){
+    x = x--
+}

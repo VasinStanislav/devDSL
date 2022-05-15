@@ -727,7 +727,12 @@ void Parser::opReturn(ASTNode *parentPtr)
 
     VecIt fixedIt = listIt;
     try { this->arithmeticExpression(opReturn); this->endLine(); }
-    catch (ParsingException & e) { listIt = fixedIt; this->conditionalExpression(opReturn); }
+    catch (ParsingException & e) 
+    { 
+        listIt = fixedIt; 
+        try { this->conditionalExpression(opReturn); }
+        catch (ParsingException & e){ listIt = fixedIt; }
+    }
 }
 
 // opBreak -> (break){1}separator?
@@ -814,7 +819,11 @@ void Parser::opDoWhile(ASTNode *parentPtr)
 
     this->keyword("do", opDoWhile);
     this->block(opDoWhile);
-    this->keyword("while", opDoWhile);
+    ASTNode * opWhile = new ASTNode(opDoWhile);
+    opDoWhile->addChild(opWhile);
+    this->keyword("while", opWhile);
+    opDoWhile->deleteLastChild();
+    delete opWhile;
     this->lBracket();
     this->conditionalExpression(opDoWhile);
     this->rBracket();

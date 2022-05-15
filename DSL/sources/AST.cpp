@@ -110,7 +110,7 @@ void AST::deleteLastNode()
 const PriorityMap PredencyControl::PRIORITY_MAP = {{"*", 0}, {"\\", 0}, {"%", 0}, {"+", 1}, {"-", 1}, 
     {">", 2}, {"<", 2}, {">=", 2}, {"<=", 2}, {"==", 3}, {"!=", 3}, {"and", 4}, {"or", 4}, {"=", 5}, 
     {"callee", 5}, {"new", 5}, {"return", 5}, {"value", 5}, {"if", 5}, {"elif", 5}, {"while",5},
-    {"for", 5}};
+    {"do", 5}, {"for", 5}};
 
 int PredencyControl::curPriority;
 
