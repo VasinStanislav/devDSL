@@ -439,6 +439,9 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
     ASTNode * prefix = nullptr, * postfix = nullptr;
     int brackets;
 
+    try { this->rBrace(); listIt--; return; }
+    catch(ParsingException & e){}
+
     PredencyControl::setCurPriority(parentPtr->getLabel().value);
 
     do 
@@ -726,7 +729,7 @@ void Parser::opReturn(ASTNode *parentPtr)
     this->keyword("return", opReturn);
 
     VecIt fixedIt = listIt;
-    try { this->arithmeticExpression(opReturn); this->endLine(); }
+    try { this->arithmeticExpression(opReturn); /*this->endLine();*/ }
     catch (ParsingException & e) 
     { 
         listIt = fixedIt; 
@@ -822,6 +825,7 @@ void Parser::opDoWhile(ASTNode *parentPtr)
     ASTNode * opWhile = new ASTNode(opDoWhile);
     opDoWhile->addChild(opWhile);
     this->keyword("while", opWhile);
+    std::cout<<"wasn`t here\n";
     opDoWhile->deleteLastChild();
     delete opWhile;
     this->lBracket();

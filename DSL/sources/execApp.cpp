@@ -11,14 +11,18 @@ int execApp()
 
     AST * tree = list.empty() ? nullptr : parse(&list);
 
+    Content * heap = getRPN(tree);
+    
+    for (auto &line : *heap)
+    {
+        delete line;
+    }
+
+    delete heap;
+    delete tree;
+
     std::cout<<std::setw(29)<<std::setfill('*')<<std::right<<"";
     std::cout<<std::setw(28)<<std::left<<""<<std::setfill(' ')<<"\n";
-
-    ASTNode * childPtr = tree->getLastChild()->getLastChild();
-    Stack * rpn =  getRPN(childPtr);
-
-    delete rpn;
-    delete tree;
 
     return 0;
 }
@@ -76,17 +80,35 @@ AST * parse(V *tokenList)
     return root;
 }
 
-Stack * getRPN(ASTNode *node)
+Content * getRPN(AST *root)
 {
     StackMachine stackMachine;
-    Stack * rpn = stackMachine.toRPN(node);
+    stackMachine.split(root);
+    Content * heap = stackMachine.getHeap();
+    NodeVector * functions = stackMachine.getFunctions();
 
-    while (!rpn->empty())
+    std::cout<<std::setw(29)<<std::setfill('*')<<std::right<<"STACK";
+    std::cout<<std::setw(28)<<std::left<<"MACHINE"<<"\n";
+
+    std::cout<<"HEAP CONTAINS:\n";
+
+    for (const auto &line : *heap)
     {
-        std::cout<<rpn->top().value<<" ";
-        rpn->pop();
+        while (!line->empty())
+        {
+            std::cout<<line->top().value<<" ";
+            line->pop();
+        }
+        std::cout<<"\n";
+    }
+
+    std::cout<<"FUNCTIONS:\n";
+
+    for (const auto &function : *functions)
+    {
+        std::cout<<function->getLabel().value<<" ";
     }
     std::cout<<"\n";
 
-    return rpn;  
+    return heap; 
 }

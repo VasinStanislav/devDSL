@@ -28,10 +28,18 @@ class StackMachine
         Content * getHeap();
         NodeVector * getFunctions();
 
-        Stack * toRPN(ASTNode *);
-        void valueToRPN(Stack *, ASTNode *);
-        void expressionToRPN(Stack *, ASTNode *);
-        void opIfToRPN(Stack *, ASTNode *);
+        Stack * toRPN(ASTNode *, bool inBlock = false, int shift = 0);
+        void assignmentToRPN(Stack *, ASTNode *, int shift = 0);
+        void expressionToRPN(Stack *, ASTNode *, int shift = 0);
+        void opIfToRPN(Stack *, ASTNode *, int shift = 0);
+        void opElifToRPN(Stack *, ASTNode *, int shift = 0);
+        void opElseToRPN(Stack *, ASTNode *, int shift = 0);
+        void opForToRPN(Stack *, ASTNode *, int shift = 0);
+        void opWhileToRPN(Stack *, ASTNode *, int shift = 0);
+        void opDoWhileToRPN(Stack *, ASTNode *, int shift = 0);
+        void calleeToRPN(Stack *, ASTNode *, int shift = 0);
+        void blockToRPN(Stack *, ASTNode *, int shift = 0);
+        void opReturnToRPN(Stack *, ASTNode *, int shift = 0);
 
         void stackToVector(Vector *, Stack *);
         void vectorToStack(Stack *, Vector *);

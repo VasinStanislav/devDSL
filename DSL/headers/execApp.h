@@ -14,7 +14,7 @@ int execApp();
 V* analyze(std::ifstream *);
 AST * parse(V *);
 // testing
-Stack *getRPN(ASTNode *);
+Content *getRPN(AST *);
 
 
 #endif

@@ -7,7 +7,7 @@ Lexer::Lexer()
     lexems.fill("CONSTRUCTOR",         (regex)(R"(^[A-Z\_]{1}[0-9a-zA-Z\_]{0,31}\(\)$)"));
     lexems.fill("INTEGER",             (regex)(R"(^0|([1-9][0-9]*)$)"));
     lexems.fill("FLOAT",               (regex)(R"(^(0|([1-9][0-9]*)\.[0-9]*([eE][-+][0-9]+)?)$)"));
-    lexems.fill("STRING",              (regex)(R"(^\"[0-9a-zA-Z\*\\/&\_\.\,\;\\\!\?\- )\(]*\"$)"));
+    lexems.fill("STRING",              (regex)(R"(^\"[+\-=<>!~\(\)0-9a-zA-Z\*\\/&\_\.\,\;\\\!\?\- )\(]*\"$)"));
     lexems.fill("UNARY_OPERATOR",      (regex)(R"(^~|([+]{2})|([-]{2})$)"));
     lexems.fill("LOGICAL_NEGATION",    (regex)(R"(^(!)$)"));
     lexems.fill("MATH_OPERATOR",       (regex)(R"(^[%+*\-\\]$)"));
