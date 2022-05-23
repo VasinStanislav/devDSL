@@ -6,14 +6,15 @@
 #include "Token.h"
 #include "AST.h"
 
-typedef std::vector<Token>          Vector;
-typedef Vector::iterator            VectorIt;
-typedef Vector::reverse_iterator    VectorRIt;
-typedef std::vector<int>            VectorInt;
-typedef VectorInt::iterator         VectorIntIt;
-typedef VectorInt::reverse_iterator VectorIntRIt;
-typedef std::stack<Token>           Stack;
-typedef std::vector<Stack *>        Content;
+typedef std::vector<Token>                  Vector;
+typedef Vector::iterator                    VectorIt;
+typedef Vector::reverse_iterator            VectorRIt;
+typedef std::vector<int>                    VectorInt;
+typedef VectorInt::iterator                 VectorIntIt;
+typedef VectorInt::reverse_iterator         VectorIntRIt;
+typedef std::stack<Token>                   Stack;
+typedef std::vector<Stack *>                Content;
+typedef std::pair<Content *, NodeVector *>  Memory;
 
 class StackMachine
 {

@@ -27,23 +27,30 @@ def main_programm(argc, argv) {
     return var
 }
 
-line = ("abc" + "def")
-for (a = 1; a < 3; a = a++){
-    x = x + a
-    print(x + " ")
-}
-print(main_programm(argc, argv))
+x = 7 + 5 * 2
+ast_expr = (6 - 5) * 4 + 3 \ 2 + 1
 
-while (x > 0){
-    x = x--
-}
+# line = ("abc" + "def")
 
-do {
-    if (x > 3) {
-        ast_expr = (6 - 5) * 4 + 3 \ 2 + 1
-        return
-    }
+# print(line)
 
-    x = x--
-    print(x + " ")
-} while (a > 0)
+# x = 2
+# for (a = 1; a < 3; a = a++){
+#    x = x + a
+#    print(x + " ")
+# }
+
+# print(main_programm(argc, argv))
+
+# while (x > 0){
+#    x = x--
+# }
+
+# do {
+#    if (x < 3) {
+#        ast_expr = (6 - 5) * 4 + 3 \ 2 + 1
+#        print(ast_expr)
+#    }
+
+#    x = x--
+# } while (x > 0)

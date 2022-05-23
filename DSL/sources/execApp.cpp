@@ -11,14 +11,10 @@ int execApp()
 
     AST * tree = list.empty() ? nullptr : parse(&list);
 
-    Content * heap = getRPN(tree);
-    
-    for (auto &line : *heap)
-    {
-        delete line;
-    }
+    Memory mem = getRPN(tree);
 
-    delete heap;
+    runProgram(mem);
+
     delete tree;
 
     std::cout<<std::setw(29)<<std::setfill('*')<<std::right<<"";
@@ -80,7 +76,7 @@ AST * parse(V *tokenList)
     return root;
 }
 
-Content * getRPN(AST *root)
+Memory getRPN(AST *root)
 {
     StackMachine stackMachine;
     stackMachine.split(root);
@@ -94,10 +90,23 @@ Content * getRPN(AST *root)
 
     for (const auto &line : *heap)
     {
-        while (!line->empty())
+        struct hack : Stack
         {
-            std::cout<<line->top().value<<" ";
-            line->pop();
+            static Token item(Stack const& stack, size_t const index)
+            {
+                return (stack.*&hack::c)[index];
+            }
+        };
+
+        Stack temporaryStack;
+        for (size_t i = 0; i < line->size(); ++i)
+        {
+            temporaryStack.push(hack::item(*line, i));
+        }
+        while (!temporaryStack.empty())
+        {
+            std::cout<<temporaryStack.top().value<<" ";
+            temporaryStack.pop();
         }
         std::cout<<"\n";
     }
@@ -106,9 +115,19 @@ Content * getRPN(AST *root)
 
     for (const auto &function : *functions)
     {
-        std::cout<<function->getLabel().value<<" ";
+        auto funcName = *function->getChildrenPtr()->begin();
+        std::cout<<funcName->getLabel().value<<" ";
     }
     std::cout<<"\n";
 
-    return heap; 
+    return {heap, functions}; 
+}
+
+void runProgram(Memory mem)
+{
+    std::cout<<std::setw(29)<<std::setfill('*')<<std::right<<"INTER";
+    std::cout<<std::setw(28)<<std::left<<"PRETER"<<"\n";
+
+    Interpreter interpreter(mem);
+    interpreter.run();
 }

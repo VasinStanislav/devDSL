@@ -12,9 +12,11 @@
 				"${fileDirname}/../headers/Lexer.h", "${fileDirname}/../headers/Parser.h",
 				"${fileDirname}/../headers/execApp.h", "${fileDirname}/../headers/Token.h",
 				"${fileDirname}/../headers/AST.h", "${fileDirname}/../headers/StackMachine.h",
+				"${fileDirname}/../headers/Interpreter.h",
 				"${fileDirname}/../sources/Lexer.cpp", "${fileDirname}/../sources/execApp.cpp",
 				"${fileDirname}/../sources/Parser.cpp", "${fileDirname}/../sources/Token.cpp",
 				"${fileDirname}/../sources/AST.cpp", "${fileDirname}/../sources/StackMachine.cpp",
+				"${fileDirname}/../sources/Interpreter.cpp",
 				"-o",
 				"${fileDirname}/../bin/${fileBasenameNoExtension}"
 			],

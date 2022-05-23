@@ -4,6 +4,7 @@
 #include "Lexer.h"
 #include "Parser.h"
 #include "StackMachine.h"
+#include "Interpreter.h"
 #include <fstream>
 #include <iostream>
 #include <iomanip>
@@ -13,8 +14,9 @@ int execApp();
 
 V* analyze(std::ifstream *);
 AST * parse(V *);
-// testing
-Content *getRPN(AST *);
+Memory getRPN(AST *);
+//testing
+void runProgram(Memory);
 
 
 #endif
