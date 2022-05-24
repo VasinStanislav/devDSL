@@ -33,8 +33,11 @@ class Interpreter
 
         void run();
 
+    private:
         void addStaticVariable(string, Token);
         Token doBinaryOp(Token, Token, Token);
+
+        void normalizeBoolean(Token *);
 };
 
 #endif

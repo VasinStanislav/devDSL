@@ -68,6 +68,7 @@ class Parser
 
         int arithmeticBrackets(ASTNode **, ASTNode **, ASTNode **, ASTNode **);
         int conditionalBrackets(ASTNode **, ASTNode **, ASTNode **);
+        void checkConditional();
         void setOperator(ASTNode **, ASTNode **, ASTNode **);
         void addValue(ASTNode **, ASTNode **, ASTNode **);
         void addValue(ASTNode **, ASTNode **, ASTNode **, ASTNode **);

@@ -34,7 +34,8 @@ void Interpreter::run()
             {
                 curStack.push(el);
             }
-            else if (el.type == "MATH_OPERATOR" or el.type == "COMPRASION_OPERATOR")
+            else if (el.type == "MATH_OPERATOR" or el.type == "COMPRASION_OPERATOR" or
+                     el.type == "LOGICAL_KW")
             {
                 auto el1 = curStack.top();
                 curStack.pop();
@@ -60,19 +61,19 @@ void Interpreter::run()
 
     for (const auto &el : this->staticStrVars)
     {
-        std::cout<<el.first<<" "<<el.second<<"\n";
+        std::cout<<el.first<<" "<<el.second<<" <- string"<<"\n";
     }
     for (const auto &el : this->staticBooleanVars)
     {
-        std::cout<<el.first<<" "<<el.second<<"\n";
+        std::cout<<el.first<<" "<<el.second<<" <- boolean"<<"\n";
     }
     for (const auto &el : this->staticFloatVars)
     {
-        std::cout<<el.first<<" "<<el.second<<"\n";
+        std::cout<<el.first<<" "<<el.second<<" <- float"<<"\n";
     }
     for (const auto &el : this->staticIntVars)
     {
-        std::cout<<el.first<<" "<<el.second<<"\n";
+        std::cout<<el.first<<" "<<el.second<<" <- int"<<"\n";
     }
 }
 
@@ -119,13 +120,18 @@ Token Interpreter::doBinaryOp(Token el1, Token el2, Token op)
     }
     else if (type == "CONSTANT_KW")
     {
-        if      (op.value == ">")  { res = std::to_string(std::stoi(el1.value) > std::stoi(el2.value)); }
-        else if (op.value == "<")  { res = std::to_string(std::stoi(el1.value) < std::stoi(el2.value)); }
-        else if (op.value == ">=") { res = std::to_string(std::stoi(el1.value) >= std::stoi(el2.value)); }
-        else if (op.value == "<=") { res = std::to_string(std::stoi(el1.value) <= std::stoi(el2.value)); }
-        else if (op.value == "==") { res = std::to_string(std::stoi(el1.value) == std::stoi(el2.value)); }
-        else if (op.value == "!=") { res = std::to_string(std::stoi(el1.value) != std::stoi(el2.value)); }
+        this->normalizeBoolean(&el1);
+        this->normalizeBoolean(&el2);
+        if      (op.value == ">")   { res = std::to_string(std::stoi(el1.value) > std::stoi(el2.value)); }
+        else if (op.value == "<")   { res = std::to_string(std::stoi(el1.value) < std::stoi(el2.value)); }
+        else if (op.value == ">=")  { res = std::to_string(std::stoi(el1.value) >= std::stoi(el2.value)); }
+        else if (op.value == "<=")  { res = std::to_string(std::stoi(el1.value) <= std::stoi(el2.value)); }
+        else if (op.value == "==")  { res = std::to_string(std::stoi(el1.value) == std::stoi(el2.value)); }
+        else if (op.value == "!=")  { res = std::to_string(std::stoi(el1.value) != std::stoi(el2.value)); }
+        else if (op.value == "and") { res = std::to_string(std::stoi(el1.value) and std::stoi(el2.value)); }
+        else if (op.value == "or")  { res = std::to_string(std::stoi(el1.value) or std::stoi(el2.value)); }
     }
+    if (op.type == "COMPRASION_OPERATOR" or op.type == "LOGICAL_KW") { type = "CONSTANT_KW"; }
 
     return {res, type, el2.line};
 }
@@ -136,4 +142,10 @@ void Interpreter::addStaticVariable(string varName, Token value)
     else if (value.type == "STRING") { this->staticStrVars.insert({varName, value.value}); }
     else if (value.type == "FLOAT") { this->staticFloatVars.insert({varName, std::stol(value.value)}); }
     else if (value.type == "CONSTANT_KW") { this->staticBooleanVars.insert({varName, (bool)std::stoi(value.value)}); }
+}
+
+void Interpreter::normalizeBoolean(Token *booleanEl)
+{
+    if (booleanEl->value == "true") { booleanEl->value = "1"; }
+    else { booleanEl->value = "0"; }
 }

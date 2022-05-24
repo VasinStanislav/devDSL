@@ -277,12 +277,12 @@ void Parser::allocation(ASTNode *parentPtr)
     catch (ParsingException &e) 
     {
         listIt = fixedIt;
-        new_->deleteLastChild();
+        if (new_->getChildrenAmount()>1) { new_->deleteLastChild(); }
         try { this->conditionalExpression(new_); }
         catch (ParsingException &e) 
         { 
             listIt = fixedIt;
-            new_->deleteLastChild(); 
+            if (new_->getChildrenAmount()>1) { new_->deleteLastChild(); }
             this->rBracket();
             return;
         }
@@ -398,6 +398,19 @@ void Parser::addValue(ASTNode **parentPtr, ASTNode **postfix, ASTNode **prefix, 
     }
 }
 
+void Parser::checkConditional()
+{
+    auto node = new ASTNode();
+    try { this->logicalOp(node); }
+    catch (ParsingException & e) 
+    { 
+        try { this->comprOp(node); }
+        catch(ParsingException & e) { delete node; return; } 
+    }
+    delete node; 
+    throw ParsingException(generateException("arithmetic expr", "conditional expr")); 
+}
+
 int Parser::arithmeticBrackets(ASTNode **parentPtr, ASTNode **postfix, ASTNode **prefix, 
                                 ASTNode **valuePtr)
 {
@@ -458,7 +471,12 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
                 this->mathOp(opPtr);
                 this->setOperator(&parentPtr, &opPtr, &valuePtr1); 
             }
-            catch (ParsingException & e) { delete opPtr; return; }
+            catch (ParsingException & e) 
+            { 
+                delete opPtr;
+                this->checkConditional();
+                return; 
+            }
         }
         catch (ParsingException & e) { throw e; }
     } while (false);
@@ -536,6 +554,7 @@ void Parser::arithmeticExpression(ASTNode *parentPtr)
         this->addValue(&parentPtr, &postfix, &prefix, &valuePtr2);
         //try { this->separator(); }
         //catch (ParsingException & e){}
+        this->checkConditional();
         return;
     }
     this->arithmeticExpression(opPtr);
