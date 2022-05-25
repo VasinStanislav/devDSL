@@ -130,4 +130,6 @@ void runProgram(Memory mem)
 
     Interpreter interpreter(mem);
     interpreter.run();
+
+    interpreter.showVariables();
 }

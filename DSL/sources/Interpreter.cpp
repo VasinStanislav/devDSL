@@ -25,12 +25,15 @@ void Interpreter::run()
     for (const auto &line : *(this->staticMem))
     {
         Vector buffer;
+        int buffIt = -1;
+        StringVector currentLineVariables;
         while (!line->empty())
         {
             auto el = line->top();
             line->pop();
 
             buffer.push_back(el);
+            buffIt++;
 
             if (el.type == "INTEGER" or el.type == "STRING" or el.type == "VARIABLE" or
                 el.type == "FLOAT" or el.type == "CONSTANT_KW")
@@ -67,26 +70,51 @@ void Interpreter::run()
 
                 this->addStaticVariable(newVar.value, value);
             }
+            else if (el.type == "pFalse")
+            {
+                auto condition = curStack.top();
+                curStack.pop();
+
+                this->normalizeBoolean(&condition);
+
+                int pos = std::stoi(el.value.substr(0, el.value.find('!')));
+                
+                if ((bool)std::stoi(condition.value)) { continue; }
+                
+                while (buffIt != pos)
+                {
+                    auto el = line->top();
+                    line->pop();
+
+                    buffer.push_back(el);
+                    buffIt++;
+                }
+            }
+            else if (el.type == "p")
+            {
+                int pos = std::stoi(el.value.substr(0, el.value.find('!')));
+
+                if (buffIt <= pos)
+                {
+                    while (buffIt != pos)
+                    {
+                        auto el = line->top();
+                        line->pop();
+
+                        buffer.push_back(el);
+                        buffIt++;
+                    }
+                }
+                else 
+                {
+                    //auto it 
+                }
+            }
 
         }
     }
 
-    for (const auto &el : this->staticStrVars)
-    {
-        std::cout<<el.first<<" "<<el.second<<" <- string"<<"\n";
-    }
-    for (const auto &el : this->staticBooleanVars)
-    {
-        std::cout<<el.first<<" "<<el.second<<" <- boolean"<<"\n";
-    }
-    for (const auto &el : this->staticFloatVars)
-    {
-        std::cout<<el.first<<" "<<el.second<<" <- float"<<"\n";
-    }
-    for (const auto &el : this->staticIntVars)
-    {
-        std::cout<<el.first<<" "<<el.second<<" <- int"<<"\n";
-    }
+
 }
 
 Token Interpreter::doBinaryOp(Token el1, Token el2, Token op)
@@ -158,6 +186,7 @@ Token Interpreter::doBinaryOp(Token el1, Token el2, Token op)
 
 Token Interpreter::doUnaryOp(Token el, Token op)
 {
+    if (el.type == "VARIABLE") { this->specifyVariable(&el); }
     string type = el.type;
 
     string res;
@@ -197,10 +226,31 @@ Token Interpreter::doUnaryOp(Token el, Token op)
 
 void Interpreter::addStaticVariable(string varName, Token value)
 {
-    if (value.type == "INTEGER") { this->staticIntVars.insert({varName, std::stol(value.value)}); }
-    else if (value.type == "STRING") { this->staticStrVars.insert({varName, value.value}); }
-    else if (value.type == "FLOAT") { this->staticFloatVars.insert({varName, std::stol(value.value)}); }
-    else if (value.type == "CONSTANT_KW") { this->staticBooleanVars.insert({varName, (bool)std::stoi(value.value)}); }
+    bool isInserted;
+    if (value.type == "INTEGER") 
+    { 
+        const auto [it, isInserted] = this->staticIntVars.insert({varName, std::stol(value.value)}); 
+        if (!isInserted) 
+        { 
+            this->staticIntVars.erase(varName); 
+            this->staticIntVars.insert({varName, std::stol(value.value)}); 
+        }
+    }
+    else if (value.type == "STRING") 
+    { 
+        const auto [it, isInserted] = this->staticStrVars.insert({varName, value.value}); 
+        if (!isInserted) { this->staticStrVars.find(value.value)->second = value.value; }
+    }
+    else if (value.type == "FLOAT") 
+    { 
+        const auto [it, isInserted] = this->staticFloatVars.insert({varName, std::stod(value.value)}); 
+        if (!isInserted) { this->staticFloatVars.find(value.value)->second = std::stod(value.value); }
+    }
+    else if (value.type == "CONSTANT_KW") 
+    { 
+        const auto [it, isInserted] = this->staticBooleanVars.insert({varName, (bool)std::stoi(value.value)});
+        if (!isInserted) { this->staticBooleanVars.find(value.value)->second = (bool)std::stoi(value.value); } 
+    }
 }
 
 void Interpreter::normalizeBoolean(Token *booleanEl)
@@ -274,4 +324,40 @@ void Interpreter::specifyVariable(Token *variable)
 
     variable->value = value;
     variable->type = type;
+}
+
+void Interpreter::showVariables()
+{
+    for (const auto &el : this->staticStrVars)
+    {
+        std::cout<<el.first<<" "<<el.second<<" <- static string"<<"\n";
+    }
+    for (const auto &el : this->staticBooleanVars)
+    {
+        std::cout<<el.first<<" "<<el.second<<" <- static boolean"<<"\n";
+    }
+    for (const auto &el : this->staticFloatVars)
+    {
+        std::cout<<el.first<<" "<<el.second<<" <- static float"<<"\n";
+    }
+    for (const auto &el : this->staticIntVars)
+    {
+        std::cout<<el.first<<" "<<el.second<<" <- static int"<<"\n";
+    }
+    for (const auto &el : this->stackStrVars)
+    {
+        std::cout<<el.first<<" "<<el.second<<" <- string"<<"\n";
+    }
+    for (const auto &el : this->stackBooleanVars)
+    {
+        std::cout<<el.first<<" "<<el.second<<" <- boolean"<<"\n";
+    }
+    for (const auto &el : this->stackFloatVars)
+    {
+        std::cout<<el.first<<" "<<el.second<<" <- float"<<"\n";
+    }
+    for (const auto &el : this->stackIntVars)
+    {
+        std::cout<<el.first<<" "<<el.second<<" <- int"<<"\n";
+    }
 }

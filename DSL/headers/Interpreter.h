@@ -10,6 +10,8 @@ typedef std::map<std::string, double>      FloatVariables;
 typedef std::map<std::string, bool>        BooleanVariables;
 typedef std::map<std::string, std::string> StrVariables;
 
+typedef std::vector<string>                StringVector;
+
 class Interpreter
 {
         Content        * staticMem;
@@ -33,7 +35,10 @@ class Interpreter
 
         void run();
 
+        void showVariables();
     private:
+        //void runBlock(Vector *, int *);
+
         void addStaticVariable(string, Token);
         Token doBinaryOp(Token, Token, Token);
         Token doUnaryOp(Token, Token);
