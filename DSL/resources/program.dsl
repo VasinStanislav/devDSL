@@ -36,11 +36,11 @@ def main_programm(argc, argv) {
 
 # print(line)
 
-# x = 2
-# for (a = 1; a < 3; a = a++){
-#    x = x + a
-#    print(x + " ")
-# }
+x = 2
+for (a = 1; a <= 3; a = a++){
+    x = x + a
+#    print(to_string(x) + " ")
+}
 
 # print(main_programm(argc, argv))
 
@@ -62,7 +62,7 @@ def main_programm(argc, argv) {
 
 a = 2
 if (a > 1) {
-#    while (a < 3) {
+    while (a < 10) {
         a = ++ a
-#    }
+    }
 }

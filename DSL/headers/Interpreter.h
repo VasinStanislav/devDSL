@@ -37,7 +37,7 @@ class Interpreter
 
         void showVariables();
     private:
-        //void runBlock(Vector *, int *);
+        void runBlock(Stack *const &, Vector *, int *);
 
         void addStaticVariable(string, Token);
         Token doBinaryOp(Token, Token, Token);
@@ -46,6 +46,8 @@ class Interpreter
         void specifyVariable(Token *);
         void normalizeBoolean(Token *);
         void normalizeString(Token *);
+        template<typename T>
+        T normalizeValue(Token);
 };
 
 #endif

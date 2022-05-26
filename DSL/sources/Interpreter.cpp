@@ -25,18 +25,25 @@ void Interpreter::run()
     for (const auto &line : *(this->staticMem))
     {
         Vector buffer;
-        int buffIt = -1;
+        VectorIt buffIt;
+        int pos;
         StringVector currentLineVariables;
-        while (!line->empty())
+
+        while(!line->empty())
         {
             auto el = line->top();
             line->pop();
-
             buffer.push_back(el);
-            buffIt++;
+        }
+        buffIt = buffer.begin();
+        pos = 0;
+
+        while (buffIt!=buffer.end())
+        {
+            auto el = *buffIt;
 
             if (el.type == "INTEGER" or el.type == "STRING" or el.type == "VARIABLE" or
-                el.type == "FLOAT" or el.type == "CONSTANT_KW")
+                el.type == "FLOAT" or el.type == "CONSTANT_KW" or el.type == "FUNCTION")
             {
                 curStack.push(el);
             }
@@ -77,39 +84,55 @@ void Interpreter::run()
 
                 this->normalizeBoolean(&condition);
 
-                int pos = std::stoi(el.value.substr(0, el.value.find('!')));
+                int pFalsePos = std::stoi(el.value.substr(0, el.value.find('!')));
                 
-                if ((bool)std::stoi(condition.value)) { continue; }
-                
-                while (buffIt != pos)
+                if ((bool)std::stoi(condition.value)) 
                 {
-                    auto el = line->top();
-                    line->pop();
-
-                    buffer.push_back(el);
                     buffIt++;
+                    pos++;
+                    continue; 
+                }
+                
+                while (pos != pFalsePos - 1) 
+                { 
+                    buffIt++; 
+                    pos++;
                 }
             }
             else if (el.type == "p")
             {
-                int pos = std::stoi(el.value.substr(0, el.value.find('!')));
+                int pPos = std::stoi(el.value.substr(0, el.value.find('!')));
 
-                if (buffIt <= pos)
+                if (pos <= pPos)
                 {
-                    while (buffIt != pos)
-                    {
-                        auto el = line->top();
-                        line->pop();
-
-                        buffer.push_back(el);
-                        buffIt++;
+                    while (pos != pPos - 1)
+                    { 
+                        buffIt++; 
+                        pos++;
                     }
                 }
                 else 
                 {
-                    //auto it 
+                    while (pos != pPos - 1) 
+                    { 
+                        buffIt--;
+                        pos--; 
+                    }
                 }
             }
+            else if (el.value == "callee")
+            {
+                buffIt++;
+                pos++;
+                auto tArgs = std::make_tuple();
+                while (buffIt->type != "FUNCTION")
+                {
+                    Token tk = *buffIt;
+                    //tArgs = std::tuple_cat(tArgs, this->normalizeValue((Token)tk););
+                }
+            }
+            buffIt++;
+            pos++;
 
         }
     }
@@ -265,6 +288,18 @@ void Interpreter::normalizeString(Token *stringEl)
     { 
         stringEl->value = stringEl->value.substr(1, stringEl->value.size()-2);
     }
+}
+
+template<typename T>
+T Interpreter::normalizeValue(Token value)
+{
+    if (value.type == "VARIABLE") { this->specifyVariable(&value); }
+
+    if (value.type == "INTEGER") { return std::stol(value.value); }
+    else if (value.type == "STRING") { return value.value; }
+    else if (value.type == "FLOAT") { return std::stod(value.value); }
+    else if (value.type == "CONSTANT_KW") { return (bool)std::stoi(value.value); }
+    return nullptr;
 }
 
 void Interpreter::specifyVariable(Token *variable)
