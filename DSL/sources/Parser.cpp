@@ -156,12 +156,12 @@ void Parser::functionCall(ASTNode *parentPtr)
     catch (ParsingException &e) 
     {
         listIt = fixedIt;
-        callee->deleteLastChild();
+        if (callee->getChildrenAmount()>1) { callee->deleteLastChild(); }
         try { this->conditionalExpression(callee); }
         catch (ParsingException &e) 
         { 
             listIt = fixedIt;
-            callee->deleteLastChild(); 
+            if (callee->getChildrenAmount()>1) { callee->deleteLastChild(); }
             this->rBracket();
             return;
         }

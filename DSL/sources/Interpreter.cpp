@@ -122,13 +122,43 @@ void Interpreter::run()
             }
             else if (el.value == "callee")
             {
-                buffIt++;
-                pos++;
-                auto tArgs = std::make_tuple();
-                while (buffIt->type != "FUNCTION")
+                Vector args;
+                Token function;
+                while (!curStack.empty())
                 {
-                    Token tk = *buffIt;
-                    //tArgs = std::tuple_cat(tArgs, this->normalizeValue((Token)tk););
+                    auto el_ = curStack.top();
+                    curStack.pop();
+                    if (el_.type != "FUNCTION") { args.push_back(el_); }
+                    else { function = el_; break; }
+                }
+                // built-in functions
+                if (function.value == "print") 
+                {
+                    auto arg = args.back();
+                    if (args.size() == 1 and arg.type == "STRING")
+                    {
+                        if (arg.type == "VARIABLE") { this->specifyVariable(&arg); }
+                        std::printf("<<**cursed python output**>> %s\n", arg.value.c_str());
+                    }
+                }
+                else if (function.value == "to_string")
+                {
+                    auto arg = args.back();
+                    if (args.size() == 1) 
+                    { 
+                        if (arg.type == "VARIABLE") { this->specifyVariable(&arg); }
+                        curStack.push({arg.value, "STRING", arg.line}); 
+                    }
+                }
+                else if (function.value == "input")
+                {
+                    if (args.empty())
+                    {
+                        string input;
+                        std::cout<<"<<**cursed python input**>> ";
+                        std::getline(std::cin, input);
+                        curStack.push({input, "STRING", function.line});
+                    }
                 }
             }
             buffIt++;
