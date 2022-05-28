@@ -844,7 +844,6 @@ void Parser::opDoWhile(ASTNode *parentPtr)
     ASTNode * opWhile = new ASTNode(opDoWhile);
     opDoWhile->addChild(opWhile);
     this->keyword("while", opWhile);
-    std::cout<<"wasn`t here\n";
     opDoWhile->deleteLastChild();
     delete opWhile;
     this->lBracket();

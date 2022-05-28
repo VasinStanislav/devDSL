@@ -1,11 +1,11 @@
 #include "../headers/Interpreter.h"
 
 Interpreter::Interpreter(Content *staticMem, NodeVector *functions) 
-    : staticMem(staticMem), functions(functions){}
+    : staticMem(staticMem), functions(functions), mode(Scope::global){}
 
-Interpreter::Interpreter(Memory mem) : staticMem(mem.first), functions(mem.second){}
+Interpreter::Interpreter(Memory mem) : staticMem(mem.first), functions(mem.second), mode(Scope::global){}
 
-Interpreter::Interpreter(Content *staticMem) : staticMem(staticMem), functions(nullptr){}
+Interpreter::Interpreter(Content *staticMem) : staticMem(staticMem), functions(nullptr), mode(Scope::global){}
 
 Interpreter::~Interpreter()
 {
@@ -18,7 +18,6 @@ Interpreter::~Interpreter()
 
 /*----------------------------------------------RUNTIME-----------------------------------------------*/
 
-// testing
 void Interpreter::run()
 {
     Stack curStack;
@@ -27,7 +26,7 @@ void Interpreter::run()
         Vector buffer;
         VectorIt buffIt;
         int pos;
-        StringVector currentLineVariables;
+        StringSet currentLineVariables;
 
         while(!line->empty())
         {
@@ -131,10 +130,11 @@ void Interpreter::run()
                     if (el_.type != "FUNCTION") { args.push_back(el_); }
                     else { function = el_; break; }
                 }
-                // built-in functions
+                // builtins
                 if (function.value == "print") 
                 {
                     auto arg = args.back();
+                    if (arg.type == "VARIABLE") { this->specifyVariable(&arg); }
                     if (args.size() == 1 and arg.type == "STRING")
                     {
                         if (arg.type == "VARIABLE") { this->specifyVariable(&arg); }
@@ -150,6 +150,33 @@ void Interpreter::run()
                         curStack.push({arg.value, "STRING", arg.line}); 
                     }
                 }
+                else if (function.value == "to_int")
+                {
+                    auto arg = args.back();
+                    if (args.size() == 1) 
+                    { 
+                        if (arg.type == "VARIABLE") { this->specifyVariable(&arg); }
+                        curStack.push({arg.value, "INTEGER", arg.line}); 
+                    }
+                }
+                else if (function.value == "to_float")
+                {
+                    auto arg = args.back();
+                    if (args.size() == 1) 
+                    { 
+                        if (arg.type == "VARIABLE") { this->specifyVariable(&arg); }
+                        curStack.push({arg.value, "FLOAT", arg.line}); 
+                    }
+                }
+                else if (function.value == "to_bool")
+                {
+                    auto arg = args.back();
+                    if (args.size() == 1) 
+                    { 
+                        if (arg.type == "VARIABLE") { this->specifyVariable(&arg); }
+                        curStack.push({arg.value, "CONSTANT_KW", arg.line}); 
+                    }
+                }
                 else if (function.value == "input")
                 {
                     if (args.empty())
@@ -160,14 +187,266 @@ void Interpreter::run()
                         curStack.push({input, "STRING", function.line});
                     }
                 }
+                // defined functions
+                else
+                {
+                    for (auto &func : *this->functions)
+                    {
+                        auto funcChildren = *func->getChildrenPtr();
+                        auto childrenIt = funcChildren.begin();
+                        if (std::strcmp((*childrenIt)->getLabel().value.c_str(), function.value.c_str()) != 0)
+                        {
+                            continue;           
+                        }
+
+                        if (funcChildren.size()-1 != args.size()) { continue; }
+
+                        auto argsIt = args.rbegin();
+                        childrenIt++;
+                        while (argsIt != args.rend() and childrenIt != funcChildren.end())
+                        {
+                            string argType = (*childrenIt)->getLabel().type;
+                            Token arg = *argsIt;
+                            if (arg.type == "VARIABLE") { this->specifyVariable(&arg); }
+                            this->addStaticVariable((*childrenIt)->getLabel().value, arg);
+                            argsIt++;
+                            childrenIt++;
+                        }
+                                                
+                        StackMachine stackMachine;
+                        Content * block = stackMachine.getContentFromFunction(func);
+                        stackMachine.showRPN(block);
+                        Token returnedValue = this->runFunction(block);
+                        delete block;
+                        if (std::strcmp(returnedValue.type.c_str(), "void") !=0 ) 
+                        {  
+                            curStack.push(returnedValue);
+                        }
+                    }
+                } 
             }
             buffIt++;
             pos++;
-
         }
     }
+}
 
+Token Interpreter::runFunction(Content *block)
+{
+    Stack curStack;
+    for (const auto &line : *block)
+    {
+        Vector buffer;
+        VectorIt buffIt;
+        int pos;
+        StringSet currentLineVariables;
 
+        while(!line->empty())
+        {
+            auto el = line->top();
+            line->pop();
+            buffer.push_back(el);
+        }
+        buffIt = buffer.begin();
+        pos = 0;
+
+        while (buffIt!=buffer.end())
+        {
+            auto el = *buffIt;
+
+            if (el.type == "INTEGER" or el.type == "STRING" or el.type == "VARIABLE" or
+                el.type == "FLOAT" or el.type == "CONSTANT_KW" or el.type == "FUNCTION")
+            {
+                curStack.push(el);
+            }
+            else if (el.type == "MATH_OPERATOR" or el.type == "COMPRASION_OPERATOR" or
+                     el.type == "LOGICAL_KW")
+            {
+                auto el1 = curStack.top();
+                curStack.pop();
+                auto el2 = curStack.top();
+                curStack.pop();
+                auto op = el;
+
+                auto res = this->doBinaryOp(el2, el1, op);
+                curStack.push(res);
+            }
+            else if (el.type == "UNARY_OPERATOR" or el.type == "LOGICAL_NEGATION")
+            {
+                auto el_ = curStack.top();
+                curStack.pop();
+                auto unOp = el;
+
+                auto res = this->doUnaryOp(el_, unOp);
+                curStack.push(res);
+            }
+            else if (el.type == "ASSIGN_OPERATOR")
+            {
+                auto newVar = curStack.top();
+                curStack.pop();
+                auto value = curStack.top();
+                curStack.pop();
+
+                this->addStaticVariable(newVar.value, value);
+            }
+            else if (el.type == "pFalse")
+            {
+                auto condition = curStack.top();
+                curStack.pop();
+
+                this->normalizeBoolean(&condition);
+
+                int pFalsePos = std::stoi(el.value.substr(0, el.value.find('!')));
+                
+                if ((bool)std::stoi(condition.value)) 
+                {
+                    buffIt++;
+                    pos++;
+                    continue; 
+                }
+                
+                while (pos != pFalsePos - 1) 
+                { 
+                    buffIt++; 
+                    pos++;
+                }
+            }
+            else if (el.type == "p")
+            {
+                int pPos = std::stoi(el.value.substr(0, el.value.find('!')));
+
+                if (pos <= pPos)
+                {
+                    while (pos != pPos - 1)
+                    { 
+                        buffIt++; 
+                        pos++;
+                    }
+                }
+                else 
+                {
+                    while (pos != pPos - 1) 
+                    { 
+                        buffIt--;
+                        pos--; 
+                    }
+                }
+            }
+            else if (el.value == "callee")
+            {
+                Vector args;
+                Token function;
+                while (!curStack.empty())
+                {
+                    auto el_ = curStack.top();
+                    curStack.pop();
+                    if (el_.type != "FUNCTION") { args.push_back(el_); }
+                    else { function = el_; break; }
+                }
+                // builtins
+                if (function.value == "print") 
+                {
+                    auto arg = args.back();
+                    if (arg.type == "VARIABLE") { this->specifyVariable(&arg); }
+                    if (args.size() == 1 and arg.type == "STRING")
+                    {
+                        if (arg.type == "VARIABLE") { this->specifyVariable(&arg); }
+                        std::printf("<<**cursed python output**>> %s\n", arg.value.c_str());
+                    }
+                }
+                else if (function.value == "to_string")
+                {
+                    auto arg = args.back();
+                    if (args.size() == 1) 
+                    { 
+                        if (arg.type == "VARIABLE") { this->specifyVariable(&arg); }
+                        curStack.push({arg.value, "STRING", arg.line}); 
+                    }
+                }
+                else if (function.value == "to_int")
+                {
+                    auto arg = args.back();
+                    if (args.size() == 1) 
+                    { 
+                        if (arg.type == "VARIABLE") { this->specifyVariable(&arg); }
+                        curStack.push({arg.value, "INTEGER", arg.line}); 
+                    }
+                }
+                else if (function.value == "to_float")
+                {
+                    auto arg = args.back();
+                    if (args.size() == 1) 
+                    { 
+                        if (arg.type == "VARIABLE") { this->specifyVariable(&arg); }
+                        curStack.push({arg.value, "FLOAT", arg.line}); 
+                    }
+                }
+                else if (function.value == "to_bool")
+                {
+                    auto arg = args.back();
+                    if (args.size() == 1) 
+                    { 
+                        if (arg.type == "VARIABLE") { this->specifyVariable(&arg); }
+                        curStack.push({arg.value, "CONSTANT_KW", arg.line}); 
+                    }
+                }
+                else if (function.value == "input")
+                {
+                    if (args.empty())
+                    {
+                        string input;
+                        std::cout<<"<<**cursed python input**>> ";
+                        std::getline(std::cin, input);
+                        curStack.push({input, "STRING", function.line});
+                    }
+                }
+                // defined functions
+                else
+                {
+                    for (auto &func : *this->functions)
+                    {
+                        auto funcChildren = *func->getChildrenPtr();
+                        auto childrenIt = funcChildren.begin();
+                        if (std::strcmp((*childrenIt)->getLabel().value.c_str(), function.value.c_str()) != 0)
+                        {
+                            continue;           
+                        }
+
+                        if (funcChildren.size() != args.size()) { continue; }
+
+                        auto argsIt = args.rbegin();
+                        while (argsIt != args.rend() and childrenIt != funcChildren.end())
+                        {
+                            string argType = (*childrenIt)->getLabel().type;
+                            Token arg = *argsIt;
+                            if (arg.type == "VARIABLE") { this->specifyVariable(&arg); }
+                            this->addStaticVariable((*childrenIt)->getLabel().value, arg);
+                        }
+                                                
+                        StackMachine stackMachine;
+                        Content * block = stackMachine.getContentFromFunction(*funcChildren.begin());
+                        stackMachine.showRPN(block);
+                        Token returnedValue = this->runFunction(block);
+                        delete block;
+                        if (std::strcmp(returnedValue.type.c_str(), "void") !=0 ) 
+                        {  
+                            curStack.push(returnedValue);
+                        }
+                    }                    
+                } 
+            }
+            else if (el.value == "return")
+            {
+                if (curStack.empty()) { return {"void", "void", 0}; }
+                auto returnedValue = curStack.top();
+                curStack.pop();
+                return returnedValue;
+            }
+            buffIt++;
+            pos++;
+        }
+    }
+    return {"void", "void", 0};
 }
 
 Token Interpreter::doBinaryOp(Token el1, Token el2, Token op)
@@ -245,28 +524,28 @@ Token Interpreter::doUnaryOp(Token el, Token op)
     string res;
     if (type == "INTEGER")
     {
-        if (op.value == "~") { res = std::to_string(-(std::stol(el.value))); }
-        else if (op.value == "++") { res = std::to_string((std::stol(el.value)) + 1l); }
-        else if (op.value == "++") { res = std::to_string(-(std::stol(el.value)) - 1l); }
+        if (std::strcmp(op.value.c_str(), "~") == 0) { res = std::to_string(-(std::stol(el.value))); }
+        else if (std::strcmp(op.value.c_str(), "++") == 0) { res = std::to_string((std::stol(el.value)) + 1); }
+        else if (std::strcmp(op.value.c_str(), "--") == 0) { res = std::to_string((std::stol(el.value)) - 1); }
     }
     else if (type == "STRING")
     {
         this->normalizeBoolean(&el);
         string value = el.value;
-        if (op.value == "++") { value.append(" "); res = value; }
-        else if (op.value == "--") { value.pop_back(); res = value; }
+        if (std::strcmp(op.value.c_str(), "++") == 0) { value.append(" "); res = value; }
+        else if (std::strcmp(op.value.c_str(), "--") == 0) { value.pop_back(); res = value; }
     }
     else if (type == "FLOAT")
     {
-        if (op.value == "~") { res = std::to_string(-(std::stod(el.value))); }
-        else if (op.value == "++") { res = std::to_string(std::stod(el.value) + 1.0); }
-        else if (op.value == "--") { res = std::to_string(std::stod(el.value) - 1.0); }
+        if (std::strcmp(op.value.c_str(), "~") == 0) { res = std::to_string(-(std::stod(el.value))); }
+        else if (std::strcmp(op.value.c_str(), "++") == 0) { res = std::to_string(std::stod(el.value) + 1.0); }
+        else if (std::strcmp(op.value.c_str(), "--") == 0) { res = std::to_string(std::stod(el.value) - 1.0); }
     }
     else if (type == "CONSTANT_KW")
     {
         this->normalizeBoolean(&el);
         string value = el.value;
-        if (op.value == "!") 
+        if (std::strcmp(op.value.c_str(), "!") == 0) 
         { 
             bool val = (bool)std::stoi(el.value);
             val = !val; 

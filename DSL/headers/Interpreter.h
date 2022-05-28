@@ -2,6 +2,7 @@
 #define INTERPRETER_H
 
 #include <map>
+#include <set>
 #include <cstring>
 #include "StackMachine.h"
 
@@ -11,6 +12,9 @@ typedef std::map<std::string, bool>        BooleanVariables;
 typedef std::map<std::string, std::string> StrVariables;
 
 typedef std::vector<string>                StringVector;
+typedef std::set<string>                   StringSet;
+
+enum Scope { local, function, global };
 
 class Interpreter
 {
@@ -18,15 +22,20 @@ class Interpreter
         NodeVector     * functions;
 
         IntVariables     staticIntVars;
+        IntVariables     funcIntVars;
         IntVariables     stackIntVars;
         FloatVariables   staticFloatVars;
+        FloatVariables   funcFloatVars;
         FloatVariables   stackFloatVars;
         BooleanVariables staticBooleanVars;
+        BooleanVariables funcBooleanVars;
         BooleanVariables stackBooleanVars;
         StrVariables     staticStrVars;
+        StrVariables     funcStrVars;
         StrVariables     stackStrVars;
 
         Stack stack;
+        Scope mode;
     public:
         Interpreter(Content *, NodeVector *);
         Interpreter(Memory);
@@ -37,7 +46,7 @@ class Interpreter
 
         void showVariables();
     private:
-        void runBlock(Stack *const &, Vector *, int *);
+        Token runFunction(Content *);
 
         void addStaticVariable(string, Token);
         Token doBinaryOp(Token, Token, Token);

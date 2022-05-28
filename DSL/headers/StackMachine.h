@@ -44,6 +44,8 @@ class StackMachine
 
         void stackToVector(Vector *, Stack *);
         void vectorToStack(Stack *, Vector *);
+
+        void showRPN(Content *);
 };  
 
 #endif

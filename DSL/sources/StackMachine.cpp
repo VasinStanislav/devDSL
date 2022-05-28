@@ -32,6 +32,19 @@ void StackMachine::split(AST * tree)
     }
 }
 
+Content * StackMachine::getContentFromFunction(ASTNode * def)
+{
+    Content * funcContent = new Content();
+    ASTNode * funcBlock = (*def->getChildrenPtr()->begin())->getLastChild();
+    NodeVector * blockChildren = funcBlock->getChildrenPtr();
+    NodeVecIt blockChildrenIt = blockChildren->begin();
+    for (; blockChildrenIt != blockChildren->end(); blockChildrenIt++)
+    {
+        funcContent->push_back(this->toRPN(*blockChildrenIt));
+    }
+    return funcContent;
+}
+
 Stack * StackMachine::toRPN(ASTNode *nodePtr, bool inBlock, int shift)
 {
     Stack *stack = new Stack();
@@ -556,4 +569,36 @@ void StackMachine::vectorToStack(Stack *stack, Vector *buff)
     {
         stack->push(*rIt);
     }
+}
+
+/*--------------------------------------------SHOW RPN------------------------------------------------*/
+
+void StackMachine::showRPN(Content *heap)
+{
+    std::cout<<"FUNCTION CONTAINS:\n";
+
+    for (const auto &line : *heap)
+    {
+        struct hack : Stack
+        {
+            static Token item(Stack const& stack, size_t const index)
+            {
+                return (stack.*&hack::c)[index];
+            }
+        };
+
+        Stack temporaryStack;
+        for (size_t i = 0; i < line->size(); ++i)
+        {
+            temporaryStack.push(hack::item(*line, i));
+        }
+        while (!temporaryStack.empty())
+        {
+            std::cout<<temporaryStack.top().value<<" ";
+            temporaryStack.pop();
+        }
+        std::cout<<"\n";
+    }
+
+    std::cout<<"END OF FUNCTION:\n";
 }

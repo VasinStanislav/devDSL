@@ -53,7 +53,12 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "typeinfo": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "compare": "cpp",
+        "concepts": "cpp",
+        "ranges": "cpp",
+        "stop_token": "cpp",
+        "set": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
