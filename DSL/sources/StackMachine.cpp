@@ -126,6 +126,11 @@ void StackMachine::opIfToRPN(Stack *stack, ASTNode *node, int shift)
     delete blockStack;
     blockStack = nullptr;
 
+    // get out of condition
+    line = buff->back().line;
+    Token pEnd = {"p!", "pEnd", line};
+    buff->push_back(pEnd);
+
     int pos = buff->size();
     jumps.push_back(pos+shift);
         
@@ -156,6 +161,12 @@ void StackMachine::opIfToRPN(Stack *stack, ASTNode *node, int shift)
             el.value.replace(0, 1, pos);
             jumpIt++;
         }
+        else if (el.type == "pEnd")
+        {
+            string pos = std::to_string(shift+buff->size());
+            el.value.replace(0, 1, pos);
+            el.line = line;
+        }
     }
 
     if (stack->size() == 1) { stack->top().line = buff->back().line; }
@@ -168,11 +179,11 @@ void StackMachine::opIfToRPN(Stack *stack, ASTNode *node, int shift)
 
 void StackMachine::opElifToRPN(Stack *stack, ASTNode *node, int shift)
 {
-    NodeVector *opIfChildren = node->getChildrenPtr();
+    NodeVector *opElifChildren = node->getChildrenPtr();
     Vector *buff = new Vector();
 
     // adding condition of operator elif to the buffer
-    NodeVecIt it = opIfChildren->begin();
+    NodeVecIt it = opElifChildren->begin();
     ASTNode *condition = *it;
     Stack *conditionStack = new Stack();
     this->expressionToRPN(conditionStack, condition);
@@ -187,13 +198,16 @@ void StackMachine::opElifToRPN(Stack *stack, ASTNode *node, int shift)
 
     // handling block of operator elif
     it++;
-    Stack *blockStack = this->toRPN(*it);
-    if (blockStack) 
-    { 
-        this->stackToVector(buff, blockStack); 
-        delete blockStack;
-        blockStack = nullptr;
-    }
+    Stack *blockStack = new Stack();
+    this->blockToRPN(blockStack, *it, buff->size()+shift);
+    if (!blockStack->empty()) { this->stackToVector(buff, blockStack); }
+    delete blockStack;
+    blockStack = nullptr;
+
+    // get out of condition
+    line = buff->back().line;
+    Token pEnd = {"p!", "pEnd", line};
+    buff->push_back(pEnd);
 
     this->vectorToStack(stack, buff);
     buff->clear();
@@ -203,18 +217,16 @@ void StackMachine::opElifToRPN(Stack *stack, ASTNode *node, int shift)
 
 void StackMachine::opElseToRPN(Stack *stack, ASTNode *node, int shift)
 {
-    NodeVector *opIfChildren = node->getChildrenPtr();
+    NodeVector *opElseChildren = node->getChildrenPtr();
     Vector *buff = new Vector();
 
     // handling block of operator else
-    NodeVecIt it = opIfChildren->begin();
-    Stack *blockStack = this->toRPN(*it);
-    if (blockStack) 
-    { 
-        this->stackToVector(buff, blockStack); 
-        delete blockStack;
-        blockStack = nullptr;
-    }
+    NodeVecIt it = opElseChildren->begin();
+    Stack *blockStack = new Stack();
+    this->blockToRPN(blockStack, *it, buff->size()+shift);
+    if (!blockStack->empty()) { this->stackToVector(buff, blockStack); }
+    delete blockStack;
+    blockStack = nullptr;
 
     this->vectorToStack(stack, buff);
     buff->clear();
@@ -289,7 +301,7 @@ void StackMachine::opForToRPN(Stack *stack, ASTNode *node, int shift)
         }
         else if (el.type == "pBreak")
         {
-            string pos = std::to_string(*jumpsIt);
+            string pos = std::to_string(shift+buff->size());
             el.value.replace(0, 1, pos);
             el.line = line;
         }
@@ -337,7 +349,7 @@ void StackMachine::opWhileToRPN(Stack *stack, ASTNode *node, int shift)
     ASTNode *block = node->getLastChild();
     Stack *blockStack = new Stack();
     this->blockToRPN(blockStack, block, buff->size()+shift);
-    if (!blockStack->empty()) {  this->stackToVector(buff, blockStack); }
+    if (!blockStack->empty()) { this->stackToVector(buff, blockStack); }
     delete blockStack;
     blockStack = nullptr;
 
@@ -360,7 +372,7 @@ void StackMachine::opWhileToRPN(Stack *stack, ASTNode *node, int shift)
         }
         else if (el.type == "pBreak")
         {
-            string pos = std::to_string(*jumpsIt);
+            string pos = std::to_string(shift+buff->size());
             el.value.replace(0, 1, pos);
             el.line = line;
         }
@@ -431,7 +443,7 @@ void StackMachine::opDoWhileToRPN(Stack *stack, ASTNode *node, int shift)
         }
         else if (el.type == "pBreak")
         {
-            string pos = std::to_string(*jumpsIt);
+            string pos = std::to_string(shift+buff->size());
             el.value.replace(0, 1, pos);
             el.line = line;
         }

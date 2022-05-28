@@ -98,7 +98,7 @@ void Interpreter::run()
                     pos++;
                 }
             }
-            else if (el.type == "p")
+            else if (el.type == "p" or el.type == "pBreak" or el.type == "pContinue" or el.type == "pEnd")
             {
                 int pPos = std::stoi(el.value.substr(0, el.value.find('!')));
 
@@ -311,7 +311,7 @@ Token Interpreter::runFunction(Content *block)
                     pos++;
                 }
             }
-            else if (el.type == "p")
+            else if (el.type == "p" or el.type == "pBreak" or el.type == "pContinue" or el.type == "pEnd")
             {
                 int pPos = std::stoi(el.value.substr(0, el.value.find('!')));
 

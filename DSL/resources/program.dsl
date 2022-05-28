@@ -1,12 +1,21 @@
 def main_programm(argc, argv) {
     x = 422
 
-    str = to_string(argc) + to_string(x)
+    if (argc > x) {
+        str = to_string(argc) + " is more than " + to_string(x)
+    } elif (argc > 420 ) {
+        str = to_string(argc) + " at least is more than 420"
+    } elif (argc < x) {
+        str = to_string(argc) + " is less than " + to_string(x)
+    } else {
+        str = to_string(argc) + " is equal with " + to_string(x)
+    }
 
     print(str)
 
-    while (1 < 0) {
-        print("1 is less than 0")
+    while (1 > 0) {
+        print("1 is more than 0")
+        break
     }
 
     var_1 = 1;      var_2 = 2
