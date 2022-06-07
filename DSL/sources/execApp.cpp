@@ -5,7 +5,7 @@ int execApp()
     std::cout<<std::setw(29)<<std::setfill('*')<<std::right<<"DEV";
     std::cout<<std::setw(28)<<std::left<<"DSL"<<"\n";
 
-    std::ifstream in("../resources/program.dsl");
+    std::ifstream in("../resources/program.curpy");
 
     V list      = *analyze(&in);
 
@@ -15,10 +15,10 @@ int execApp()
 
     runProgram(mem);
 
-    delete tree;
-
     std::cout<<std::setw(29)<<std::setfill('*')<<std::right<<"";
     std::cout<<std::setw(28)<<std::left<<""<<std::setfill(' ')<<"\n";
+
+    delete tree;
 
     return 0;
 }

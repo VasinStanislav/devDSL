@@ -674,33 +674,17 @@ void Interpreter::showVariables()
 {
     for (const auto &el : this->staticStrVars)
     {
-        std::cout<<el.first<<" "<<el.second<<" <- static string"<<"\n";
+        std::cout<<el.first<<" "<<el.second<<" <- string"<<"\n";
     }
     for (const auto &el : this->staticBooleanVars)
     {
-        std::cout<<el.first<<" "<<el.second<<" <- static boolean"<<"\n";
+        std::cout<<el.first<<" "<<el.second<<" <- boolean"<<"\n";
     }
     for (const auto &el : this->staticFloatVars)
     {
-        std::cout<<el.first<<" "<<el.second<<" <- static float"<<"\n";
-    }
-    for (const auto &el : this->staticIntVars)
-    {
-        std::cout<<el.first<<" "<<el.second<<" <- static int"<<"\n";
-    }
-    for (const auto &el : this->stackStrVars)
-    {
-        std::cout<<el.first<<" "<<el.second<<" <- string"<<"\n";
-    }
-    for (const auto &el : this->stackBooleanVars)
-    {
-        std::cout<<el.first<<" "<<el.second<<" <- boolean"<<"\n";
-    }
-    for (const auto &el : this->stackFloatVars)
-    {
         std::cout<<el.first<<" "<<el.second<<" <- float"<<"\n";
     }
-    for (const auto &el : this->stackIntVars)
+    for (const auto &el : this->staticIntVars)
     {
         std::cout<<el.first<<" "<<el.second<<" <- int"<<"\n";
     }
