@@ -44,3 +44,34 @@ opWhile -> while lBracket conditionalExpression rBracket block
 opFor -> for lBracket assignment conditionalExpression separator assignment rBracket block
 
 # Terminals
+constructor -> "^[A-Z\_]{1}[0-9a-zA-Z\_]{0,31}\(\)$"
+
+function -> "^[a-z\_]{1}[0-9a-zA-Z\_]{0,31}\(\)$"
+
+lBracket -> "^\($"
+
+variable -> "^[a-zA-Z\_]{1}[0-9a-zA-Z\_]{0,31}$"
+
+argsSeparator -> "^\,$"
+
+rBracket -> "^\)$"
+
+lBrace -> "^\{$"
+
+rBrace -> "^\}$"
+
+assignOp -> "^(=)$"
+
+unaryOp -> "^~|([+]{2})|([-]{2})$"
+
+logicalNegation -> "^(!)$"
+
+value -> ( "^0|([1-9][0-9]* )$" | "^\"[+\-=<>!~\(\)0-9a-zA-Z\*\\/&\_\.\,\;\\\!\?\- )\(:]* \"$" | "^[a-zA-Z\_]{1}[0-9a-zA-Z\_]{0,31}$" | "^(0|([1-9][0-9]* )\.[0-9]* ([eE][-+][0-9]+)?)$" | "^(true|false)$" )
+
+mathOp -> "^[%+* \-\\]$"
+
+separator -> "^\;$"
+
+comprOp -> "^[<>]|(>=)|(<=)|(==)|(!=)$"
+
+logicalOp -> "^(and|or)$"
